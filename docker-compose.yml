@@ -1,0 +1,38 @@
+version: '3'
+services:
+  # manages statefulness
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # producer is our data generator
+  producer:
+    build: .
+    volumes:
+      - ./producer.py:/app/producer.py
+    command: python /app/producer.py
+    restart: always
+    depends_on:
+      - kafka
+
+  # consumer should be spark streaming
+  consumer:
+    build: .
+    volumes:
+      - ./consumer.py:/app/consumer.py
+    command: python /app/consumer.py
+    restart: always
+    depends_on:
+      - kafka
