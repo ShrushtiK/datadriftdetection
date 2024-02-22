@@ -4,7 +4,7 @@ import json
 
 consumer = KafkaConsumer(
     'data_stream',
-    bootstrap_servers=['localhost:9092'],
+    bootstrap_servers=['broker:29092'],
     api_version=(0, 11, 5),
      auto_offset_reset='earliest',
      enable_auto_commit=True,
