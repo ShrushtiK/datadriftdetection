@@ -126,23 +126,18 @@ if __name__ == "__main__":
         # connect to kafka with spark connection
         spark_df = connect_to_kafka(spark_conn)
         selection_df = create_selection_df_from_kafka(spark_df)
-        # Generate ID using row_number() function
-        #window_spec = Window.orderBy("number")  # You can adjust the ordering as per your requirement
-        #final_df = selection_df.withColumn("id", row_number().over(window_spec))
-        #final_df = selection_df.rdd.zipWithIndex().map(lambda x: (x[0]["number"], x[1])).toDF(["number", "id"])
-        
-        #window_spec = Window.orderBy("number")
-        #final_df = selection_df.withColumn("id", row_number().over(window_spec))
-        final_df = selection_df.withColumn("id", monotonically_increasing_id())
         session = create_cassandra_connection()
 
         if session is not None:
             create_keyspace(session)
             create_table(session)
-            
-            print("Streaming is being started...")
 
-            
-            streaming_query = (selection_df.writeStream.foreachBatch(write_to_c).start())   
+            logging.info("Streaming is being started...")
+
+            streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
+                               .option('checkpointLocation', '/tmp/checkpoint')
+                               .option('keyspace', 'spark_streams')
+                               .option('table', 'dataframe')
+                               .start())
 
             streaming_query.awaitTermination()
