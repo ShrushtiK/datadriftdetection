@@ -16,10 +16,14 @@ def create_keyspace(session):
 
 
 def create_table(session):
+    # CHANGE 4 # TODO: cassandra does not have datatype NUMBER(?)
     session.execute("""
     CREATE TABLE IF NOT EXISTS spark_streams.dataframe (
         id UUID PRIMARY KEY,
-        number NUMBER);
+        feature1 FLOAT,
+        feature2 FLOAT,
+        feature3 FLOAT,
+        label NUMBER);
     """)
 
     print("Table created successfully!")
@@ -29,17 +33,24 @@ def insert_data(session, **kwargs):
     print("inserting data...")
 
     id_cas = datetime.datetime.now()
-    number_cas = kwargs.get('number')
+    data_points_cas = kwargs.get('data_point') # CHANGE 5
 
-    try:
-        session.execute("""
-            INSERT INTO spark_streams.dataframe(id, number)
-                VALUES (%s, %f)
-        """, (id_cas, number_cas))
-        logging.info(f"Data inserted for {id_cas} {number_cas}")
+    # CHANGE 9: in case of batch data, take each data point
+    for data_point in data_points_cas:
+        # CHANGE 6: break the input into x features and 1 label
+        fields = data_point.split(",")
 
-    except Exception as e:
-        logging.error(f'could not insert data due to {e}')
+        try:
+            # CHANGE 8
+            session.execute("""
+                INSERT INTO spark_streams.dataframe(id, feature1, feature2, feature3, label)
+                    VALUES (%s, %f)
+            """, (id_cas, fields[0], fields[1], fields[2], fields[3]))
+            # TODO: the above cannot be dynamic, because it depends on the table structure
+            logging.info(f"Data inserted for {id_cas} {fields[0]} {fields[1]} {fields[2]} {fields[3]}")
+
+        except Exception as e:
+            logging.error(f'could not insert data due to {e}')
 
 
 def create_spark_connection():
@@ -94,8 +105,11 @@ def create_cassandra_connection():
 def create_selection_df_from_kafka(spark_df):
     schema = StructType([
         StructField("id", StringType(), False),
-        StructField("number", FloatType(), False),
-
+        # CHANGE 7
+        StructField("feature1", FloatType(), False),
+        StructField("feature2", FloatType(), False),
+        StructField("feature3", FloatType(), False),
+        StructField("label", IntegerType(), False)
     ])
 
     sel = spark_df.selectExpr("CAST(value AS STRING)") \

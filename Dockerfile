@@ -3,8 +3,7 @@ FROM python:3.8-slim
 RUN apt-get update && \
     apt-get install -y netcat-openbsd
 
-RUN pip install kafka-python==2.0.2
-
+RUN pip install kafka-python==2.0.2 numpy liac-arff
 
 COPY . /app
 
