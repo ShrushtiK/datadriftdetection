@@ -3,6 +3,7 @@ from kafka import KafkaProducer
 import time
 import json
 import random
+import uuid
 
 producer = KafkaProducer(
     bootstrap_servers=['broker:29092'],
@@ -12,7 +13,9 @@ producer = KafkaProducer(
                          json.dumps(x).encode('utf-8'))
 
 while True:
-    data = {'number': random.random()}
+    unique_id = str(uuid.uuid4())
+    # Create data containing the number and ID
+    data = {'id': unique_id, 'number': random.random()}
     producer.send('data_stream', data)
     print(f"Sent data: {data}")
     producer.flush()
