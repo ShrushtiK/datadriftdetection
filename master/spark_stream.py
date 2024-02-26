@@ -27,7 +27,7 @@ def create_table(session):
         feature_0 FLOAT,
         feature_1 FLOAT,
         feature_2 FLOAT,
-        label NUMBER,
+        label FLOAT,
         );
     """)
 
