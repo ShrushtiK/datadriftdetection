@@ -64,8 +64,9 @@ while True:
     # CHANGE 2: we send the data as a whole to make the approach more dynamic
     # TODO: (drift type 1, stream data. How will the user give this input?)
     unique_id = str(uuid.uuid4())
-    data = {'id': unique_id, 'data_point': getData(1, True)}
+    data = {'id': unique_id, 'data_point': getData(1, True)} 
     producer.send('data_stream', data)
     print(f"Sent data: {data}")
     producer.flush()
     time.sleep(1)
+
