@@ -127,13 +127,15 @@ services:
     #image: bitnami/spark:latest
     build: ./master
     depends_on:
-      - cassandra_db
+      cassandra_db:
+        condition: service_healthy
     #command: bin/spark-class org.apache.spark.deploy.master.Master
     ports:
       - "9090:8080"
       - "7077:7077"
     volumes:
       - ./master/spark_stream.py:/usr/app/spark_stream.py
+    restart: always
     
     
 
@@ -161,6 +163,11 @@ services:
       - HEAP_NEWSIZE=100M
       - CASSANDRA_USERNAME=cassandra
       - CASSANDRA_PASSWORD=cassandra
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "DESCRIBE KEYSPACES"]
+      interval: 10s
+      retries: 10
+      timeout: 5s
 #    volumes:
 #      - ./data/cassandra:/var/lib/cassandra
 

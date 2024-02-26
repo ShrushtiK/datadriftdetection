@@ -47,10 +47,11 @@ def getData(driftType, streamData, batchSize=10):
         unique_id = str(uuid.uuid4())
 
         results = { 'id': unique_id,
-                    'feature_0':float(data[i][0]),
-                   'feature_1':float(data[i][1]),
-                   'feature_2':float(data[i][2]),
-                   'label':float(data[i][3])}
+                    'feature_0': round(float(data[i][0]), 3),
+                   'feature_1': round(float(data[i][1]), 3),
+                   'feature_2': round(float(data[i][2]), 3),
+                   'label': round(float(data[i][3]), 3)
+                    }
         index+=1
 
         producer.send('data_stream', results)
