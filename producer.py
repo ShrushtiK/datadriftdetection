@@ -54,7 +54,7 @@ def getData(driftType, streamData, batchSize=10):
         index+=1
 
         producer.send('data_stream', results)
-        print(f"Sent data: {data}")
+        print(f"Sent data: {results}")
         producer.flush()
         time.sleep(1)
 
