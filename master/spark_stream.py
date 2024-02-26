@@ -22,40 +22,38 @@ def create_keyspace(session):
 
 def create_table(session):
     session.execute("""
-    CREATE TABLE IF NOT EXISTS spark_streams.dataframe (
-        id UUID PRIMARY KEY,
-        feature_0 FLOAT,
-        feature_1 FLOAT,
-        feature_2 FLOAT,
-        label FLOAT,
+        CREATE TABLE IF NOT EXISTS spark_streams.dataframe (
+            id UUID PRIMARY KEY,
+            feature_0 FLOAT,
+            feature_1 FLOAT,
+            feature_2 FLOAT,
+            label FLOAT
         );
-    """)
-
-    print("Table created successfully!")
+        """)
 
 
-def insert_data(session, **kwargs):
-    print("inserting data...")
-
-    id_cas = datetime.datetime.now()
-    data_points_cas = kwargs.get('data_point') # CHANGE 5
-    print("AAAAAAAAAAAAAASDDL: ", data_points_cas)
-    # CHANGE 9: in case of batch data, take each data point
-    for data_point in data_points_cas:
-        # CHANGE 6: break the input into x features and 1 label
-        fields = data_point.split(",")
-
-        try:
-            # CHANGE 8
-            session.execute("""
-                INSERT INTO spark_streams.dataframe(id, feature_1, feature_2, feature_3, label)
-                    VALUES (%s, %f)
-            """, (id_cas, fields[0], fields[1], fields[2], fields[3]))
-            # TODO: the above cannot be dynamic, because it depends on the table structure
-            logging.info(f"Data inserted for {id_cas} {fields[0]} {fields[1]} {fields[2]} {fields[3]}")
-
-        except Exception as e:
-            logging.error(f'could not insert data due to {e}')
+# def insert_data(session, **kwargs):
+#     print("inserting data...")
+#
+#     id_cas = datetime.datetime.now()
+#     data_points_cas = kwargs.get('data_point') # CHANGE 5
+#     print("AAAAAAAAAAAAAASDDL: ", data_points_cas)
+#     # CHANGE 9: in case of batch data, take each data point
+#     for data_point in data_points_cas:
+#         # CHANGE 6: break the input into x features and 1 label
+#         fields = data_point.split(",")
+#
+#         try:
+#             # CHANGE 8
+#             session.execute("""
+#                 INSERT INTO spark_streams.dataframe(id, feature_1, feature_2, feature_3, label)
+#                     VALUES (%s, %f)
+#             """, (id_cas, fields[0], fields[1], fields[2], fields[3]))
+#             # TODO: the above cannot be dynamic, because it depends on the table structure
+#             logging.info(f"Data inserted for {id_cas} {fields[0]} {fields[1]} {fields[2]} {fields[3]}")
+#
+#         except Exception as e:
+#             logging.error(f'could not insert data due to {e}')
 
 
 
@@ -115,7 +113,7 @@ def create_selection_df_from_kafka(spark_df):
         StructField("feature_0", FloatType(), False),
         StructField("feature_1", FloatType(), False),
         StructField("feature_2", FloatType(), False),
-        StructField("label", IntegerType(), False),
+        StructField("label", FloatType(), False),
     ])
 
     sel = spark_df.selectExpr("CAST(value AS STRING)") \

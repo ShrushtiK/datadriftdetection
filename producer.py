@@ -44,13 +44,22 @@ def getData(driftType, streamData, batchSize=10):
     global index
     for i in range(index, index+iter):
         # results.append(data[i])
-        results = {'feature_0':data[i][0],
-                   'feature_1':data[i][1],
-                   'feature_2':data[i][2],
-                   'label':data[i][3]}
+        unique_id = str(uuid.uuid4())
+
+        results = { 'id': unique_id,
+                    'feature_0':float(data[i][0]),
+                   'feature_1':float(data[i][1]),
+                   'feature_2':float(data[i][2]),
+                   'label':float(data[i][3])}
         index+=1
-        
-    return results
+
+        producer.send('data_stream', results)
+        print(f"Sent data: {data}")
+        producer.flush()
+        time.sleep(1)
+
+
+
 
 
 producer = KafkaProducer(
@@ -63,10 +72,6 @@ producer = KafkaProducer(
 while True:
     # CHANGE 2: we send the data as a whole to make the approach more dynamic
     # TODO: (drift type 1, stream data. How will the user give this input?)
-    unique_id = str(uuid.uuid4())
-    data = {'id': unique_id, 'data_point': getData(1, True)} 
-    producer.send('data_stream', data)
-    print(f"Sent data: {data}")
-    producer.flush()
-    time.sleep(1)
+
+    getData(1, True)
 
