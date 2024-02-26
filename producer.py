@@ -43,7 +43,11 @@ def getData(driftType, streamData, batchSize=10):
     results=[]
     global index
     for i in range(index, index+iter):
-        results.append(data[i])
+        # results.append(data[i])
+        results = {'feature_0':data[i][0],
+                   'feature_1':data[i][1],
+                   'feature_2':data[i][2],
+                   'label':data[i][3]}
         index+=1
         
     return results
