@@ -139,7 +139,7 @@ services:
     
     
 
-  spark-worker:
+  spark-worker-1:
     build: ./master/spark
     #command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     depends_on:
@@ -149,8 +149,22 @@ services:
       SPARK_WORKER_CORES: 2
       SPARK_WORKER_MEMORY: 1g
       SPARK_MASTER_URL: spark://spark-master:7077
-    volumes:
-      - ./spark/dependencies.zip:/usr/dependencies.zip
+#    volumes:
+#      - ./spark/dependencies.zip:/usr/dependencies.zip
+
+  spark-worker-2:
+    build: ./master/spark
+    #command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_MODE: worker
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 1g
+      SPARK_MASTER_URL: spark://spark-master:7077
+#    volumes:
+#      - ./spark/dependencies.zip:/usr/dependencies.zip
+
 
   cassandra_db:
     image: cassandra:latest
