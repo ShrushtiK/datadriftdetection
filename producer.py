@@ -6,8 +6,8 @@ import random
 import uuid
 # CHANGE 3
 import arff, numpy as np
-from datetime import timezone 
-import datetime
+from datetime import datetime 
+
 
 # CHANGE 1
 index=0
@@ -48,12 +48,14 @@ def getData(driftType, streamData, batchSize=10):
         # results.append(data[i])
         unique_id = str(uuid.uuid4())
 
-        dt = datetime.datetime.now(timezone.utc)
-        utc_time = dt.replace(tzinfo=timezone.utc)
-        utc_timestamp = utc_time.timestamp() 
+        # dt = datetime.datetime.now(timezone.utc)
+        # utc_time = dt.replace(tzinfo=timezone.utc)
+        # utc_timestamp = utc_time.timestamp() 
+        ts = datetime.now().isoformat()
 
         results = { 'id': unique_id,
-                    'timestamp': utc_timestamp,
+                    #'timestamp': utc_timestamp,
+                    'timestamp': ts,
                     'feature_0': round(float(data[i][0]), 3),
                     'feature_1': round(float(data[i][1]), 3),
                     'feature_2': round(float(data[i][2]), 3),
