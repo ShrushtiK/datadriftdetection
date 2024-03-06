@@ -2,7 +2,7 @@ FROM bitnami/spark:latest
 
 WORKDIR /usr/app
 
-COPY model/gbt_model.py gbt_model.py
+COPY gbt_drift.py gbt_drift.py
 
 COPY submit_job.sh submit_job.sh
 
