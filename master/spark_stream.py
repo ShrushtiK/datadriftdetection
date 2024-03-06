@@ -24,7 +24,8 @@ def create_table(session):
     session.execute("""
         CREATE TABLE IF NOT EXISTS spark_streams.dataframe (
             id UUID PRIMARY KEY,
-            timestamp TIMESTAMP,        
+            timestamp TIMESTAMP,
+            train BOOLEAN,                           
             feature_0 FLOAT,
             feature_1 FLOAT,
             feature_2 FLOAT,
@@ -66,6 +67,9 @@ def create_spark_connection():
             .appName('SparkDataStreaming') \
             .config('spark.jars.packages', "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
+            .config('spark.dynamicAllocation.enabled', 'true') \
+            .config('spark.dynamicAllocation.minExecutors', '1') \
+            .config('spark.dynamicAllocation.maxExecutors', '2') \
             .config('spark.cassandra.connection.host', 'cassandra') \
             .getOrCreate()
 
@@ -112,6 +116,7 @@ def create_selection_df_from_kafka(spark_df):
     schema = StructType([
         StructField("id", StringType(), False),
         StructField("timestamp", TimestampType(), False),
+        StructField("train", BooleanType(), False),
         StructField("feature_0", FloatType(), False),
         StructField("feature_1", FloatType(), False),
         StructField("feature_2", FloatType(), False),

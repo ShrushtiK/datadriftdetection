@@ -53,9 +53,12 @@ def getData(driftType, streamData, batchSize=10):
         # utc_timestamp = utc_time.timestamp() 
         ts = datetime.now().isoformat()
 
+        train_or_test = True if index <= 1250 else False
+
         results = { 'id': unique_id,
                     #'timestamp': utc_timestamp,
                     'timestamp': ts,
+                    'train': train_or_test,
                     'feature_0': round(float(data[i][0]), 3),
                     'feature_1': round(float(data[i][1]), 3),
                     'feature_2': round(float(data[i][2]), 3),
