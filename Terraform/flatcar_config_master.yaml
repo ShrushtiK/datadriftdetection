@@ -1,0 +1,78 @@
+variant: flatcar
+version: 1.0.0
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ${sshkey}
+storage:
+  files:
+    - path: /opt/k3s-install.sh
+      mode: 0777
+      contents:
+        source: https://get.k3s.io
+
+    # - path: /opt/install_helm.sh
+    #   mode: 0777
+    #   contents: 
+    #     inline: |
+    #         export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+    #         wget https://get.helm.sh/helm-v3.13.1-linux-amd64.tar.gz
+    #         tar -zxvf helm-v3.13.1-linux-amd64.tar.gz
+    #         mkdir -p ~/bin
+    #         mv linux-amd64/helm ~/bin/helm
+    #         export PATH=$PATH:~/bin
+    #         helm version
+    #         helm repo add gitlab https://charts.gitlab.io --kubeconfig=/etc/rancher/k3s/k3s.yaml
+    #         helm repo update --kubeconfig=/etc/rancher/k3s/k3s.yaml
+    #         helm upgrade --kubeconfig=/etc/rancher/k3s/k3s.yaml --install demo-agent gitlab/gitlab-agent --namespace gitlab-agent-demo-agent --create-namespace --set image.tag=v16.5.0 --set config.token=glagent-shBxU2g4RnmqhvA_o3TruCTdbzPHLMcBCGQeg4hGup9xmmu1bA --set config.kasAddress=wss://kas.gitlab.com
+
+
+    # - path: /opt/install_gitlabagent.sh
+    #   mode: 0777
+    #   contents: 
+    #     inline: |
+    #        helm upgrade --install demo-agent gitlab/gitlab-agent --namespace gitlab-agent-demo-agent --create-namespace --set image.tag=v16.5.0 --set config.token=glagent-shBxU2g4RnmqhvA_o3TruCTdbzPHLMcBCGQeg4hGup9xmmu1bA --set config.kasAddress=wss://kas.gitlab.com
+systemd:
+  units:
+    - name: k3s-install.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run K3s script
+        Wants=network-online.target
+        After=network.target network-online.target
+        ConditionPathExists=/opt/k3s-install.sh
+        ConditionPathExists=!/opt.bin/k3s-install.sh
+        ConditionPathExists=!/opt/bin/k3s
+        [Service]
+        Type=forking
+        TimeoutStartSec=180
+        RemainAfterExit=yes
+        KillMode=process
+        Environment="K3S_TOKEN=secret_edgecluster_token"
+        Environment="INSTALL_K3S_EXEC=server --disable=traefik --cluster-init --write-kubeconfig-mode 644"
+        ExecStart=/usr/bin/sh -c "/opt/k3s-install.sh"
+        [Install]
+        WantedBy=multi-user.target
+
+    # - name: helm.service
+    #   enabled: true 
+    #   contents: |
+    #     [Unit]
+    #     After=cinderintr.service
+    #     Requires=cinderintr.service
+    #     [Service]
+    #     ExecStart=/usr/bin/sh -c "/opt/install_helm.sh"
+    #     [Install]
+    #     WantedBy=multi-user.target
+    # - name: gitlabagent.service
+    #   enabled: true 
+    #   contents: |
+    #     [Unit]
+    #     Wants=network-online.target
+    #     After=network.target network-online.target
+    #     [Service]
+    #     ExecStart=/usr/bin/sh -c "/opt/install_gitlabagent.sh"
+    #     [Install]
+    #     WantedBy=multi-user.target

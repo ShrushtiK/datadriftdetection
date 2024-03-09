@@ -1,0 +1,40 @@
+variant: flatcar
+version: 1.0.0
+
+# This configures the user account
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ${sshkey}
+
+storage:
+  files:
+    - path: /opt/k3s-install.sh
+      #filesystem: root
+      mode: 0777
+      contents:
+        source: https://get.k3s.io
+
+# This starts the very simple Docker container
+systemd:
+  units:
+    - name: k3s-install.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run K3s script
+        Wants=network-online.target
+        After=network.target network-online.target
+        ConditionPathExists=!/opt.bin/k3s-install.sh
+        ConditionPathExists=!/opt/bin/k3s
+        [Service]
+        Type=forking
+        TimeoutStartSec=180
+        RemainAfterExit=yes
+        KillMode=process
+        Environment="K3S_TOKEN=secret_edgecluster_token"
+        Environment="INSTALL_K3S_EXEC='--server' 'https://${master_ip}:6443'"
+        ExecStart=/usr/bin/sh -c "/opt/k3s-install.sh"
+        [Install]
+        WantedBy=multi-user.target
