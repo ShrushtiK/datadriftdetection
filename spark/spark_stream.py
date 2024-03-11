@@ -23,14 +23,15 @@ def create_keyspace(session):
 def create_table(session):
     session.execute("""
         CREATE TABLE IF NOT EXISTS spark_streams.dataframe (
-            id UUID PRIMARY KEY,
+            id UUID,
             timestamp TIMESTAMP,
-            train BOOLEAN,                           
+            train BOOLEAN,
             feature_0 FLOAT,
             feature_1 FLOAT,
             feature_2 FLOAT,
-            label FLOAT
-        );
+            label FLOAT,
+            PRIMARY KEY (id, timestamp)
+        ) WITH CLUSTERING ORDER BY (timestamp DESC);
         """)
 
 

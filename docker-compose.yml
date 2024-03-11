@@ -159,3 +159,63 @@ services:
       interval: 10s
       retries: 10
       timeout: 5s
+#
+#  cassandra_db:
+#    image: cassandra:latest
+#    hostname: cassandra
+#    container_name: cassandra
+#    environment:
+#      - CASSANDRA_SEEDS=cassandra
+#      - CASSANDRA_PASSWORD=cassandra
+#      - CASSANDRA_CLUSTER_NAME=TestCluster
+#      - CASSANDRA_DC=DC1
+#      - CASSANDRA_RACK=RACK1
+#    healthcheck:
+#      test: [ "CMD", "cqlsh", "-e", "DESCRIBE KEYSPACES" ]
+#      interval: 10s
+#      retries: 10
+#      timeout: 5s
+#
+#  cassandra-node2:
+#    image: cassandra:latest
+#    depends_on:
+#      - cassandra_db
+#    environment:
+#      - CASSANDRA_SEEDS=cassandra
+#      - CASSANDRA_PASSWORD=cassandra
+#      - CASSANDRA_CLUSTER_NAME=TestCluster
+#      - CASSANDRA_DC=DC1
+#      - CASSANDRA_RACK=RACK1
+#    healthcheck:
+#      test: [ "CMD", "/bin/bash", "-c", "nc -z cassandra-host 9042" ]
+#      interval: 10s
+#      retries: 5
+#      timeout: 5s
+#
+#  cassandra-node3:
+#    image: cassandra:latest
+#    depends_on:
+#      - cassandra_db
+#    environment:
+#      - CASSANDRA_SEEDS=cassandra
+#      - CASSANDRA_PASSWORD=cassandra
+#      - CASSANDRA_CLUSTER_NAME=TestCluster
+#      - CASSANDRA_DC=DC1
+#      - CASSANDRA_RACK=RACK1
+#    healthcheck:
+#      test: [ "CMD", "/bin/bash", "-c", "nc -z cassandra-host 9042" ]
+#      interval: 10s
+#      retries: 5
+#      timeout: 5s
+
+  grafana:
+    image: grafana/grafana-enterprise
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    healthcheck:
+      test: ["CMD", "/bin/bash", "-c", "nc -z cassandra-host 9042"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
