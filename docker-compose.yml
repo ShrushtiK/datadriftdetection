@@ -16,8 +16,6 @@ services:
       timeout: 5s
       retries: 5
 
-
-
   broker:
     image: confluentinc/cp-server:7.4.0
     hostname: broker
@@ -124,8 +122,7 @@ services:
 #      - broker
 
   spark-master:
-    #image: bitnami/spark:latest
-    build: ./master
+    build: ./spark/
     depends_on:
       cassandra_db:
         condition: service_healthy
@@ -133,14 +130,10 @@ services:
     ports:
       - "9090:8080"
       - "7077:7077"
-    volumes:
-     - ./master/spark_stream.py:/usr/app/spark_stream.py
-    restart: always
-    
-    
+    restart: always   
 
   spark-worker:
-    build: ./master/spark
+    build: ./spark/worker
     #command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     depends_on:
       - spark-master
@@ -149,8 +142,6 @@ services:
       SPARK_WORKER_CORES: 2
       SPARK_WORKER_MEMORY: 1g
       SPARK_MASTER_URL: spark://spark-master:7077
-    volumes:
-      - ./spark/dependencies.zip:/usr/dependencies.zip
 
   cassandra_db:
     image: cassandra:latest
@@ -168,9 +159,3 @@ services:
       interval: 10s
       retries: 10
       timeout: 5s
-#    volumes:
-#      - ./data/cassandra:/var/lib/cassandra
-
-
-
-
