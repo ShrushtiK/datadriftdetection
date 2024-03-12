@@ -195,8 +195,11 @@ services:
 
   cassandra-node2:
     image: cassandra:latest
+    hostname: cassandra-node2
+    container_name: cassandra-node2
     depends_on:
-      - cassandra
+      cassandra:
+        condition: service_healthy
     expose:
       - 7000
       - 7001
@@ -215,15 +218,19 @@ services:
       - CASSANDRA_DC=DC1
       - CASSANDRA_RACK=RACK1
     healthcheck:
-      test: [ "CMD", "/bin/bash", "-c", "nc -z cassandra 9042" ]
-      interval: 10s
-      retries: 5
-      timeout: 5s
+      test: ["CMD-SHELL", "nodetool status"]
+      interval: 2m
+      start_period: 2m
+      timeout: 10s
+      retries: 3
 
   cassandra-node3:
     image: cassandra:latest
+    hostname: cassandra-node3
+    container_name: cassandra-node3
     depends_on:
-      - cassandra
+      cassandra-node2:
+        condition: service_healthy
     expose:
       - 7000
       - 7001
@@ -242,10 +249,11 @@ services:
       - CASSANDRA_DC=DC1
       - CASSANDRA_RACK=RACK1
     healthcheck:
-      test: [ "CMD", "/bin/bash", "-c", "nc -z cassandra 9042" ]
-      interval: 10s
-      retries: 5
-      timeout: 5s
+      test: ["CMD-SHELL", "nodetool status"]
+      interval: 2m
+      start_period: 2m
+      timeout: 10s
+      retries: 3
 
   grafana:
     image: grafana/grafana-enterprise
