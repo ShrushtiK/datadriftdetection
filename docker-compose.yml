@@ -263,6 +263,8 @@ services:
       - '3000:3000'
     depends_on:
       - cassandra
+    volumes:
+      - ./grafana-data:/var/lib/grafana
 #    healthcheck:
 #      test: ["CMD", "/bin/bash", "-c", "nc -z cassandra 9042"]
 #      interval: 10s
