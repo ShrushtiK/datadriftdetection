@@ -14,7 +14,7 @@ from pyspark.sql.window import Window
 def create_keyspace(session):
     session.execute("""
         CREATE KEYSPACE IF NOT EXISTS spark_streams
-        WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};
+        WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'};
     """)
 
     print("Keyspace created successfully!")
@@ -30,7 +30,7 @@ def create_table(session):
             feature_1 FLOAT,
             feature_2 FLOAT,
             label FLOAT,
-            PRIMARY KEY (id, timestamp)
+            PRIMARY KEY ((id), timestamp)
         ) WITH CLUSTERING ORDER BY (timestamp DESC);
         """)
 
