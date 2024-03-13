@@ -2,6 +2,18 @@ CREATE KEYSPACE IF NOT EXISTS spark_streams WITH replication = {'class': 'Simple
 
 USE spark_streams;
 
+CREATE TABLE IF NOT EXISTS spark_streams.drift_analysis (
+    test_timestamp TIMESTAMP,
+    id UUID,
+    label FLOAT,
+    prediction FLOAT,
+    feature_0 FLOAT,
+    feature_1 FLOAT,
+    feature_2 FLOAT,
+    timestamp TIMESTAMP,
+    PRIMARY KEY ((id), test_timestamp)
+); 
+
 CREATE TABLE IF NOT EXISTS spark_streams.dataframe_train (
     id UUID,
     timestamp TIMESTAMP,
@@ -15,7 +27,6 @@ CREATE TABLE IF NOT EXISTS spark_streams.dataframe_train (
 CREATE TABLE IF NOT EXISTS spark_streams.dataframe_test (
     id UUID,
     timestamp TIMESTAMP,
-    test BOOLEAN,
     feature_0 FLOAT,
     feature_1 FLOAT,
     feature_2 FLOAT,
@@ -24,4 +35,5 @@ CREATE TABLE IF NOT EXISTS spark_streams.dataframe_test (
 ) WITH CLUSTERING ORDER BY (timestamp DESC);
 
 COPY spark_streams.dataframe_train (id, timestamp, feature_0, feature_1, feature_2, label) FROM '/var/lib/cassandra/_init/training.csv' WITH HEADER = TRUE;
-        
+
+       

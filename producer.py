@@ -56,7 +56,6 @@ def getData(driftType, streamData, batchSize=10):
         results = { 'id': unique_id,
                     #'timestamp': utc_timestamp,
                     'timestamp': ts,
-                    'test': True,
                     'feature_0': round(float(data[i][0]), 3),
                     'feature_1': round(float(data[i][1]), 3),
                     'feature_2': round(float(data[i][2]), 3),

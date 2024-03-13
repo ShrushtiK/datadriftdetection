@@ -1,5 +1,16 @@
 version: '3'
 
+x-airflow-common: &airflow-common
+  build: ./airflow
+  env_file:
+    - ./airflow/airflow.env
+  volumes:
+    - ./airflow/jobs:/opt/airflow/jobs
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+  depends_on:
+    - postgres
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -203,7 +214,7 @@ services:
         - cassandra
       volumes:
         - ./cassandra_init/:/var/lib/cassandra/_init 
-      command: /bin/bash -c "sleep 30 && echo loading cassandra keyspace && cqlsh cassandra -f /var/lib/cassandra/_init/init.cql"
+      command: /bin/bash -c "sleep 90 && echo loading cassandra keyspace && cqlsh cassandra -f /var/lib/cassandra/_init/init.cql"
 
 
   cassandra-node2:
@@ -283,3 +294,34 @@ services:
 #      interval: 10s
 #      retries: 5
 #      timeout: 5s
+
+  postgres:
+    image: postgres:14.0
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+
+  airflow-init:
+    <<: *airflow-common
+    command: airflow db init
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: bash -c "airflow db migrate && airflow users create --username admin --firstname admin --lastname admin --role Admin --email abc@gmail.com --password admin && airflow scheduler"
+    depends_on:
+      cassandra-load-keyspace:
+        condition: service_completed_successfully
+      spark-master:
+        condition: service_started
+      airflow-init:
+        condition: service_started
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - airflow-scheduler
+      - airflow-init
