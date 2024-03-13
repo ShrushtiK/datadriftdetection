@@ -192,6 +192,19 @@ services:
       interval: 10s
       retries: 10
       timeout: 5s
+    # command: ["/bin/sh", "-c", "cassandra -f & sleep 60; cqlsh -f /var/lib/cassandra/_init/init.cql"]
+    # volumes:
+    #   - ./cassandra_init/:/var/lib/cassandra/_init
+
+  cassandra-load-keyspace:
+      container_name: cassandra-load-keyspace
+      image: cassandra:latest
+      depends_on:
+        - cassandra
+      volumes:
+        - ./cassandra_init/:/var/lib/cassandra/_init 
+      command: /bin/bash -c "sleep 30 && echo loading cassandra keyspace && cqlsh cassandra -f /var/lib/cassandra/_init/init.cql"
+
 
   cassandra-node2:
     image: cassandra:latest

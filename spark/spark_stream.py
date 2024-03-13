@@ -11,21 +11,21 @@ from pyspark.sql.types import *
 from pyspark.sql.window import Window
 
 
-def create_keyspace(session):
-    session.execute("""
-        CREATE KEYSPACE IF NOT EXISTS spark_streams
-        WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'};
-    """)
+# def create_keyspace(session):
+#     session.execute("""
+#         CREATE KEYSPACE IF NOT EXISTS spark_streams
+#         WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'};
+#     """)
 
-    print("Keyspace created successfully!")
+#     print("Keyspace created successfully!")
 
 
 def create_table(session):
     session.execute("""
-        CREATE TABLE IF NOT EXISTS spark_streams.dataframe (
+        CREATE TABLE IF NOT EXISTS spark_streams.dataframe_test (
             id UUID,
             timestamp TIMESTAMP,
-            train BOOLEAN,
+            test BOOLEAN,
             feature_0 FLOAT,
             feature_1 FLOAT,
             feature_2 FLOAT,
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         session = create_cassandra_connection()
 
         if session is not None:
-            create_keyspace(session)
+            #create_keyspace(session)
             create_table(session)
 
             logging.info("Streaming is being started...")
@@ -149,7 +149,7 @@ if __name__ == "__main__":
             streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
                                .option('checkpointLocation', '/tmp/checkpoint')
                                .option('keyspace', 'spark_streams')
-                               .option('table', 'dataframe')
+                               .option('table', 'dataframe_test')
                                .start())
 
             streaming_query.awaitTermination()
