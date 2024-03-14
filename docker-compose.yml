@@ -134,7 +134,7 @@ services:
       - "9090:8080"
       - "7077:7077"
     volumes:
-      - ./master/spark_stream.py:/usr/app/spark_stream.py
+     - ./master/spark_stream.py:/usr/app/spark_stream.py
     restart: always
     
     

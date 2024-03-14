@@ -6,6 +6,8 @@ import random
 import uuid
 # CHANGE 3
 import arff, numpy as np
+from datetime import datetime 
+
 
 # CHANGE 1
 index=0
@@ -46,12 +48,28 @@ def getData(driftType, streamData, batchSize=10):
         # results.append(data[i])
         unique_id = str(uuid.uuid4())
 
+        # dt = datetime.datetime.now(timezone.utc)
+        # utc_time = dt.replace(tzinfo=timezone.utc)
+        # utc_timestamp = utc_time.timestamp() 
+        ts = datetime.now().isoformat()
+
+        train_or_test = True if index <= 1250 else False
+
         results = { 'id': unique_id,
+                    #'timestamp': utc_timestamp,
+                    'timestamp': ts,
+                    'train': train_or_test,
                     'feature_0': round(float(data[i][0]), 3),
-                   'feature_1': round(float(data[i][1]), 3),
-                   'feature_2': round(float(data[i][2]), 3),
-                   'label': round(float(data[i][3]), 3)
-                    }
+                    'feature_1': round(float(data[i][1]), 3),
+                    'feature_2': round(float(data[i][2]), 3),
+                    'label': round(float(data[i][3]), 3)
+        }
+        # results = { 'id': unique_id,
+        #     'feature_0': round(float(data[i][0]), 3),
+        #     'feature_1': round(float(data[i][1]), 3),
+        #     'feature_2': round(float(data[i][2]), 3),
+        #     'label': round(float(data[i][3]), 3)
+        #     }
         index+=1
 
         producer.send('data_stream', results)
