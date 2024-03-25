@@ -102,7 +102,7 @@ diagnosticMode:
 image:
   registry: docker.io
   repository: sarahema/spark-scalable
-  tag: 1.2.0
+  tag: 2.0.0
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
