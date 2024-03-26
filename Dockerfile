@@ -6,9 +6,11 @@ RUN apt-get update && \
 RUN pip install kafka-python==2.0.2 numpy liac-arff
 
 COPY DriftSets/ /app/DriftSets
+COPY producer.py /app/producer.py
 
-WORKDIR /app
+#WORKDIR /app
 
 # Wait for Kafka to be ready before creating the topic
-CMD ["sh", "-c", "while ! nc -z broker 9092; do sleep 1; done && confluent local kafka topic create data-stream"]
+#CMD ["sh", "-c", "while ! nc -z broker 9092; do sleep 1; done && confluent local kafka topic create data-stream"]
 
+CMD ["python", "/app/producer.py"]

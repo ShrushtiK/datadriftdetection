@@ -61,26 +61,30 @@ def create_table(session):
 
 def create_spark_connection():
     s_conn = None
-
     try:
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config('spark.jars.packages', "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
+            .config("spark.executor.instances", "2") \
+            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:2.7.0") \
+            .config("spark.kubernetes.namespace", "default") \
+            .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
-            .config('spark.dynamicAllocation.enabled', 'true') \
-            .config("spark.num.executors", '2') \
-            .config('spark.dynamicAllocation.minExecutors', '1') \
-            .config('spark.dynamicAllocation.maxExecutors', '2') \
-            .config('spark.cassandra.connection.host', 'cassandra') \
+            .config("spark.cassandra.connection.host", "default-cassandra.default.svc.cluster.local") \
+            .config("spark.cassandra.connection.port", "9042") \
+            .config("spark.dynamicAllocation.enabled", "true") \
+            .config("spark.dynamicAllocation.minExecutors", "1") \
+            .config("spark.dynamicAllocation.maxExecutors", "2") \
             .getOrCreate()
 
         s_conn.sparkContext.setLogLevel("ERROR")
         logging.info("Spark connection created successfully!")
     except Exception as e:
-        print(s_conn)
         logging.error(f"Couldn't create the spark session due to exception {e}")
 
     return s_conn
+
+import os
+os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages  org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,saurfang:spark-sas7bdat:3.0.0-s_2.12 pyspark-shell'
 
 
 def connect_to_kafka(spark_conn):
@@ -89,11 +93,11 @@ def connect_to_kafka(spark_conn):
         # subscribe to topic
         spark_df = spark_conn.readStream \
             .format('kafka') \
-            .option('kafka.bootstrap.servers', 'broker:29092') \
+            .option('kafka.bootstrap.servers', 'kafka-service.default.svc.cluster.local:9092') \
             .option('subscribe', 'data_stream') \
             .option('startingOffsets', 'earliest') \
             .load()
-        print("kafka dataframe created successfully")
+        print("Kafka dataframe created successfully")
     except Exception as e:
         print(f"Failed to create Kafka dataframe: {e}\n{traceback.format_exc()}")
 
@@ -102,15 +106,17 @@ def connect_to_kafka(spark_conn):
 
 def create_cassandra_connection():
     try:
-        # connecting to the cassandra cluster
-        cluster = Cluster(['cassandra'])
+        # Connecting to the Cassandra cluster
+        cluster = Cluster(['default-cassandra.default.svc.cluster.local'])
 
+        # Creating a session
         cas_session = cluster.connect()
 
         return cas_session
     except Exception as e:
-        logging.error(f"Could not create cassandra connection due to {e}")
+        logging.error(f"Could not create Cassandra connection due to {e}")
         return None
+
 
 
 def create_selection_df_from_kafka(spark_df):
