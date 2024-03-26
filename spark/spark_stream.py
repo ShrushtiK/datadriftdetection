@@ -65,12 +65,14 @@ def create_spark_connection():
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
             .config("spark.executor.instances", "2") \
-            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:2.7.0") \
+            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:2.8.0") \
             .config("spark.kubernetes.namespace", "default") \
             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
             .config("spark.cassandra.connection.host", "default-cassandra.default.svc.cluster.local") \
             .config("spark.cassandra.connection.port", "9042") \
+            .config("spark.cassandra.connection.auth.username", "cassandra") \
+            .config("spark.cassandra.connection.auth.password", "cassandra") \
             .config("spark.dynamicAllocation.enabled", "true") \
             .config("spark.dynamicAllocation.minExecutors", "1") \
             .config("spark.dynamicAllocation.maxExecutors", "2") \
@@ -82,10 +84,6 @@ def create_spark_connection():
         logging.error(f"Couldn't create the spark session due to exception {e}")
 
     return s_conn
-
-import os
-os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages  org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,saurfang:spark-sas7bdat:3.0.0-s_2.12 pyspark-shell'
-
 
 def connect_to_kafka(spark_conn):
     spark_df = None
