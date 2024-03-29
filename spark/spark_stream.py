@@ -9,7 +9,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, monotonically_increasing_id, row_number, expr
 from pyspark.sql.types import *
 from pyspark.sql.window import Window
-
+from cassandra.auth import PlainTextAuthProvider
 
 # def create_keyspace(session):
 #     session.execute("""
@@ -65,14 +65,14 @@ def create_spark_connection():
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
             .config("spark.executor.instances", "2") \
-            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:2.8.0") \
+            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:2.10.0") \
             .config("spark.kubernetes.namespace", "default") \
             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
             .config("spark.cassandra.connection.host", "default-cassandra.default.svc.cluster.local") \
             .config("spark.cassandra.connection.port", "9042") \
-            .config("spark.cassandra.connection.auth.username", "cassandra") \
-            .config("spark.cassandra.connection.auth.password", "cassandra") \
+            .config("spark.cassandra.auth.username", "cassandra") \
+            .config("spark.cassandra.auth.password", "cassandra") \
             .config("spark.dynamicAllocation.enabled", "true") \
             .config("spark.dynamicAllocation.minExecutors", "1") \
             .config("spark.dynamicAllocation.maxExecutors", "2") \
@@ -105,7 +105,9 @@ def connect_to_kafka(spark_conn):
 def create_cassandra_connection():
     try:
         # Connecting to the Cassandra cluster
-        cluster = Cluster(['default-cassandra.default.svc.cluster.local'])
+        auth_provider = PlainTextAuthProvider(username='cassandra', password='cassandra')
+
+        cluster = Cluster(['default-cassandra.default.svc.cluster.local'], auth_provider=auth_provider)
 
         # Creating a session
         cas_session = cluster.connect()

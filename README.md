@@ -23,3 +23,87 @@ docker compose up --build --scale spark-worker=4
 - Integration of Grafana and connectivity with Cassandra
 - Integration of Airflow for Spark jobs (training and testing)
 - Cassandra table redesign for storing historical data and saving predictions + Cassandra partitioning (full replication)
+
+## Deadline 5-6:
+- Deployed Airflow on Kube
+- Deployed Spark on Kube
+- Deployed Kafka  on Kube
+- Deployed CassandraDB  on Kube
+- Deployed Kafka Producer  on Kube
+- Submit the data stream job on Spark  on Kube
+- Connected Spark with Kafka, creation of data stream and dataframe  on Kube
+- Connecting Spark with CassandraDB: still needs to solve autentication problem with CassandraDB  on Kube
+
+setup_spark.sh:
+
+Install and configure Spark, it downloads the custum Spark docker image from DockerHub
+```
+helm install spark bitnami/spark
+
+helm upgrade spark bitnami/spark --set worker.replicaCount=1 --set worker.coreLimit=1 --set worker.memoryLimit=256m --set image.repository=sarahema/spark-scalable --set image.tag=2.10.0
+```
+To submit the job on Spark: first, enter the spark worker pod and send the command to the spark master service with the dependencies of the job and the job file
+
+```
+kubectl exec -ti --namespace default spark-worker-0 -- spark-submit --master spark://spark-master-svc:7077 --py-files /usr/app/spark_stream.py --name SparkStreamingJob --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,saurfang:spark-sas7bdat:3.0.0-s_2.12 --conf spark.cassandra.auth.username=cassandra --conf spark.cassandra.auth.password=cassandra --conf spark.driver.extraJavaOptions="-Divy.cache.dir=/tmp -Divy.home=/tmp"  /usr/app/spark_stream.py  
+```
+
+spark_stream.py job:
+
+configure cassandra cluster with authentication credentials
+
+```
+def create_cassandra_connection():
+    try:
+        # Connecting to the Cassandra cluster
+        auth_provider = PlainTextAuthProvider(username='cassandra', password='cassandra')
+
+        cluster = Cluster(['default-cassandra.default.svc.cluster.local'], auth_provider=auth_provider)
+
+        # Creating a session
+        cas_session = cluster.connect()
+
+        return cas_session
+    except Exception as e:
+        logging.error(f"Could not create Cassandra connection due to {e}")
+        return None
+```
+
+specify the spark connector credentials when conencting to cassandra
+```      
+def create_spark_connection():
+    s_conn = None
+    try:
+        s_conn = SparkSession.builder \
+            .appName('SparkDataStreaming') \
+            .config("spark.executor.instances", "2") \
+            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:2.10.0") \
+            .config("spark.kubernetes.namespace", "default") \
+            .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
+                                           "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
+            .config("spark.cassandra.connection.host", "default-cassandra.default.svc.cluster.local") \
+            .config("spark.cassandra.connection.port", "9042") \
+            .config("spark.cassandra.auth.username", "cassandra") \
+            .config("spark.cassandra.auth.password", "cassandra") \
+            .config("spark.dynamicAllocation.enabled", "true") \
+            .config("spark.dynamicAllocation.minExecutors", "1") \
+            .config("spark.dynamicAllocation.maxExecutors", "2") \
+            .getOrCreate()
+```
+
+setup_cassandra.sh:
+
+# this will give it a random password
+helm install default oci://registry-1.docker.io/bitnamicharts/cassandra
+
+# here you setup the password
+helm install default \
+    --set dbUser.user=cassandra,dbUser.password=cassandra \
+    oci://registry-1.docker.io/bitnamicharts/cassandra
+
+
+# connect to the cassandra client pod with the correct auth password
+kubectl run --namespace default default-cassandra-client --rm --tty -i --restart='Never'  --env CASSANDRA_PASSWORD=cassandra  --image docker.io/bitnami/cassandra:4.1.4-debian-12-r4 -- bash 
+
+# here the script fails although this is identical to the official documentation: connect to cassandra query language after you entered the cassandra pod
+cqlsh -u cassandra -p cassandra default-cassandra 9042 
