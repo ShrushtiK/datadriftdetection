@@ -4,9 +4,7 @@
 helm install default oci://registry-1.docker.io/bitnamicharts/cassandra
 
 # here you setup the password
-helm install default \
-    --set dbUser.user=cassandra,dbUser.password=cassandra \
-    oci://registry-1.docker.io/bitnamicharts/cassandra
+helm install cassandra --set cassandra.dbUser.user=cassandra --set cassandra.dbUser.password=cassandra oci://registry-1.docker.io/bitnamicharts/cassandra
 
 
 # connect to the cassandra client pod with the correct auth password

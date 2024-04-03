@@ -22,6 +22,12 @@ from cassandra.auth import PlainTextAuthProvider
 
 def create_table(session):
     session.execute("""
+            CREATE KEYSPACE IF NOT EXISTS spark_streams WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3}
+            """)
+    session.execute("""
+            USE spark_streams
+            """)
+    session.execute("""
         CREATE TABLE IF NOT EXISTS spark_streams.dataframe_test (
             id UUID,
             timestamp TIMESTAMP,
@@ -65,11 +71,11 @@ def create_spark_connection():
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
             .config("spark.executor.instances", "2") \
-            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:2.10.0") \
+            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.2.0") \
             .config("spark.kubernetes.namespace", "default") \
             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
-            .config("spark.cassandra.connection.host", "default-cassandra.default.svc.cluster.local") \
+            .config("cassandra:spark_streams/spark.cassandra.connection.host", "cassandra.default.svc.cluster.local") \
             .config("spark.cassandra.connection.port", "9042") \
             .config("spark.cassandra.auth.username", "cassandra") \
             .config("spark.cassandra.auth.password", "cassandra") \
@@ -107,7 +113,7 @@ def create_cassandra_connection():
         # Connecting to the Cassandra cluster
         auth_provider = PlainTextAuthProvider(username='cassandra', password='cassandra')
 
-        cluster = Cluster(['default-cassandra.default.svc.cluster.local'], auth_provider=auth_provider)
+        cluster = Cluster(['cassandra.default.svc.cluster.local'], auth_provider=auth_provider)
 
         # Creating a session
         cas_session = cluster.connect()
@@ -155,6 +161,7 @@ if __name__ == "__main__":
                                .option('checkpointLocation', '/tmp/checkpoint')
                                .option('keyspace', 'spark_streams')
                                .option('table', 'dataframe_test')
+                               .option('host', 'cassandra.default.svc.cluster.local')
                                .start())
 
             streaming_query.awaitTermination()
