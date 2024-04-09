@@ -62,7 +62,7 @@ def create_spark_connection():
     try:
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.4.0") \
+            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.6.0") \
             .config("spark.kubernetes.namespace", "default") \
             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \

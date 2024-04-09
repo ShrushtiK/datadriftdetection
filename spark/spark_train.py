@@ -13,7 +13,7 @@ from pyspark.sql.window import Window
 # Initialize Spark Session with Cassandra support
 spark = SparkSession.builder \
     .appName("Training Model") \
-    .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.4.0") \
+    .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.6.0") \
     .config("spark.kubernetes.namespace", "default") \
     .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                    "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
@@ -22,11 +22,16 @@ spark = SparkSession.builder \
     .config("spark.cassandra.auth.username", "cassandra") \
     .config("spark.cassandra.auth.password", "cassandra") \
     .config("spark.dynamicAllocation.enabled", "true") \
+    .config("spark.dynamicAllocation.initialExecutors", 1) \
+    .config("spark.dynamicAllocation.maxExecutors", 4) \
+    .config("spark.dynamicAllocation.minExecutors", 1) \
     .getOrCreate()
+
+print("!@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
 data = spark.read \
     .format("org.apache.spark.sql.cassandra") \
-    .options(table="dataframe_train", keyspace="spark_streams", host="cassandra.default.svc.cluster.local") \
+    .options(table="dataframe_test", keyspace="spark_streams", host="cassandra.default.svc.cluster.local") \
     .load()
 
 sorted_data = data.sort("timestamp")
@@ -46,7 +51,7 @@ testData = data_with_row_number.filter(col("row_num") > split_index).drop("row_n
 # Repartition the DataFrame to ensure it's distributed across executors
 trainingData = trainingData.repartition("timestamp")
 testData = testData.repartition("timestamp")
-
+print("testData=======================================================================: ", testData)
 # Prepare the VectorAssembler as part of the pipeline stages
 featureAssembler = VectorAssembler(
     inputCols=["feature_0", "feature_1", "feature_2"], 
@@ -54,13 +59,13 @@ featureAssembler = VectorAssembler(
 
 # Configure GBTRegressor
 gbt = GBTRegressor(featuresCol="features", labelCol="label", maxIter=10)
-
+print("MODEL============================================================================: ", gbt)
 # Chain VectorAssembler and GBT model in a Pipeline
 pipeline = Pipeline(stages=[featureAssembler, gbt])
 
 # Train model
 model = pipeline.fit(trainingData)
-
+print("MODEL FIT ======================================================", model)
 # Initialize evaluator
 evaluator = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
 
