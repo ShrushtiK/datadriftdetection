@@ -20,7 +20,8 @@ resource "openstack_compute_instance_v2" "flatcar_worker" {
     name = "worker ${count.index}"
     # name = "CorPool"
     # how many vms
-    count = 3
+    #count = 3
+    count = 1
     # OS
     image_id = openstack_images_image_v2.flatcar.id
     # RAM, CPU

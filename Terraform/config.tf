@@ -13,7 +13,7 @@ data "ct_config" "master" {
 data "ct_config" "worker" {
   strict = true
   pretty_print = false
-  count = 3
+  count = 1
   content = templatefile("${path.module}/flatcar_config_worker.yaml", {
     sshkey = file("${path.module}/id_rsa.pub")
     master_ip = openstack_compute_instance_v2.flatcar_master.network.0.fixed_ip_v4
