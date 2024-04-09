@@ -11,18 +11,10 @@ from pyspark.sql.types import *
 from pyspark.sql.window import Window
 from cassandra.auth import PlainTextAuthProvider
 
-# def create_keyspace(session):
-#     session.execute("""
-#         CREATE KEYSPACE IF NOT EXISTS spark_streams
-#         WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'};
-#     """)
-
-#     print("Keyspace created successfully!")
-
 
 def create_table(session):
     session.execute("""
-            CREATE KEYSPACE IF NOT EXISTS spark_streams WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3}
+            CREATE KEYSPACE IF NOT EXISTS spark_streams WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}
             """)
     session.execute("""
             USE spark_streams
@@ -39,43 +31,17 @@ def create_table(session):
         ) WITH CLUSTERING ORDER BY (timestamp DESC);
         """)
 
-
-# def insert_data(session, **kwargs):
-#     print("inserting data...")
-#
-#     id_cas = datetime.datetime.now()
-#     data_points_cas = kwargs.get('data_point') # CHANGE 5
-#     print("AAAAAAAAAAAAAASDDL: ", data_points_cas)
-#     # CHANGE 9: in case of batch data, take each data point
-#     for data_point in data_points_cas:
-#         # CHANGE 6: break the input into x features and 1 label
-#         fields = data_point.split(",")
-#
-#         try:
-#             # CHANGE 8
-#             session.execute("""
-#                 INSERT INTO spark_streams.dataframe(id, feature_1, feature_2, feature_3, label)
-#                     VALUES (%s, %f)
-#             """, (id_cas, fields[0], fields[1], fields[2], fields[3]))
-#             # TODO: the above cannot be dynamic, because it depends on the table structure
-#             logging.info(f"Data inserted for {id_cas} {fields[0]} {fields[1]} {fields[2]} {fields[3]}")
-#
-#         except Exception as e:
-#             logging.error(f'could not insert data due to {e}')
-
-
-
 def create_spark_connection():
     s_conn = None
     try:
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config("spark.executor.instances", "2") \
+            .config("spark.executor.instances", "1") \
             .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.2.0") \
             .config("spark.kubernetes.namespace", "default") \
             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
-            .config("cassandra:spark_streams/spark.cassandra.connection.host", "cassandra.default.svc.cluster.local") \
+            .config("spark.cassandra.connection.host", "cassandra.default.svc.cluster.local") \
             .config("spark.cassandra.connection.port", "9042") \
             .config("spark.cassandra.auth.username", "cassandra") \
             .config("spark.cassandra.auth.password", "cassandra") \
@@ -86,6 +52,8 @@ def create_spark_connection():
 
         s_conn.sparkContext.setLogLevel("ERROR")
         logging.info("Spark connection created successfully!")
+        print("=============================================================================================================")
+        print(s_conn.sparkContext.getConf().getAll())
     except Exception as e:
         logging.error(f"Couldn't create the spark session due to exception {e}")
 
