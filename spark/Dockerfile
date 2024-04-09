@@ -3,6 +3,8 @@ FROM bitnami/spark:latest
 WORKDIR /usr/app
 
 COPY spark_stream.py spark_stream.py
+COPY spark_train.py spark_train.py
+COPY spark_test.py spark_test.py
 
 COPY submit_job.sh submit_job.sh
 

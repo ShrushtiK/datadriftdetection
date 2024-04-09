@@ -20,6 +20,32 @@ def create_table(session):
             USE spark_streams
             """)
     session.execute("""
+        CREATE TABLE IF NOT EXISTS spark_streams.drift_analysis (
+            test_timestamp TIMESTAMP,
+            id UUID,
+            label FLOAT,
+            prediction FLOAT,
+            feature_0 FLOAT,
+            feature_1 FLOAT,
+            feature_2 FLOAT,
+            timestamp TIMESTAMP,
+            PRIMARY KEY ((id), test_timestamp)
+        ); 
+        """)
+
+    session.execute("""
+        CREATE TABLE IF NOT EXISTS spark_streams.dataframe_train (
+            id UUID,
+            timestamp TIMESTAMP,
+            feature_0 FLOAT,
+            feature_1 FLOAT,
+            feature_2 FLOAT,
+            label FLOAT,
+            PRIMARY KEY ((id), timestamp)
+        ) WITH CLUSTERING ORDER BY (timestamp DESC);
+        """)
+
+    session.execute("""
         CREATE TABLE IF NOT EXISTS spark_streams.dataframe_test (
             id UUID,
             timestamp TIMESTAMP,
@@ -36,8 +62,7 @@ def create_spark_connection():
     try:
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config("spark.executor.instances", "1") \
-            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.2.0") \
+            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.4.0") \
             .config("spark.kubernetes.namespace", "default") \
             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
@@ -46,8 +71,6 @@ def create_spark_connection():
             .config("spark.cassandra.auth.username", "cassandra") \
             .config("spark.cassandra.auth.password", "cassandra") \
             .config("spark.dynamicAllocation.enabled", "true") \
-            .config("spark.dynamicAllocation.minExecutors", "1") \
-            .config("spark.dynamicAllocation.maxExecutors", "2") \
             .getOrCreate()
 
         s_conn.sparkContext.setLogLevel("ERROR")

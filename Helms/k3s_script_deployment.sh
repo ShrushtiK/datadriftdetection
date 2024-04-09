@@ -3,7 +3,7 @@
 # if the KUBECONFIG CLUSTER is not set to k3s.yaml, then use --kubeconfig k3s.yaml as flag in all the commands
 helm install --kube-insecure-skip-tls-verify spark bitnami/spark
 
-helm upgrade --kube-insecure-skip-tls-verify  spark bitnami/spark --set master.resourcesPreset=none --set worker.resourcesPreset=none --set image.repository=sarahema/spark-scalable --set image.tag=3.3.0
+helm upgrade --kube-insecure-skip-tls-verify  spark bitnami/spark --set master.resourcesPreset=none --set worker.resourcesPreset=none --set image.repository=sarahema/spark-scalable --set image.tag=3.4.0
 
 kubectl --insecure-skip-tls-verify apply -f Helms/charts/cassandra/manifests/cassandra-service.yaml
 kubectl --insecure-skip-tls-verify apply -f Helms/charts/cassandra/manifests/cassandra-statefulset.yaml
