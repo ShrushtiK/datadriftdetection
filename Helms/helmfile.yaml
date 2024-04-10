@@ -40,10 +40,30 @@ releases:
   - name: grafana
     namespace: default
     chart: grafana/grafana
-    # Deploy Grafana, no chart version , so latest
     values:
       - adminUser: admin
       - adminPassword: admin
+      - plugins:
+          - hadesarchitect-cassandra-datasource
+      - datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+              - name: Cassandra
+                type: hadesarchitect-cassandra-datasource
+                access: proxy
+                url: cassandra.default.svc.cluster.local:9042
+                isDefault: true
+                jsonData:
+                  keyspace: spark_streams
+                  consistency: ONE
+                  user: cassandra
+                  password: cassandra
+
+      - grafana.ini:
+          paths:
+            provisioning: /etc/grafana/provisioning
+
 
   - name: spark
     namespace: default
