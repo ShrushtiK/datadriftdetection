@@ -1,0 +1,62 @@
+heat_template_version: 2013-05-23
+
+description: >
+  A simple template to configure autoscaling for an instance group based on CPU utilization.
+
+resources:
+  my_scale_group:
+    type: OS::Heat::AutoScalingGroup
+    properties:
+      min_size: 1
+      max_size: 5
+      desired_capacity: 2
+      resource:
+        type: OS::Nova::Server
+        properties:
+          image: "${flatcar_image_id}"
+          flavor: "digi.v1.vm.4-8-20"
+          networks:
+            - network: "${network_id}"
+          user_data: "${k3s_user_data}"
+
+  cpu_alarm_high:
+    type: OS::Ceilometer::Alarm
+    properties:
+      meter_name: cpu_util
+      statistic: avg
+      period: 600
+      evaluation_periods: 3
+      threshold: 50
+      alarm_actions:
+        - {get_attr: [scale_up_policy, alarm_url]}
+      matching_metadata: {'metadata.user_metadata.autoscale': 'yes'}
+      comparison_operator: gt
+
+  cpu_alarm_low:
+    type: OS::Ceilometer::Alarm
+    properties:
+      meter_name: cpu_util
+      statistic: avg
+      period: 600
+      evaluation_periods: 3
+      threshold: 15
+      alarm_actions:
+        - {get_attr: [scale_down_policy, alarm_url]}
+      matching_metadata: {'metadata.user_metadata.autoscale': 'yes'}
+      comparison_operator: lt
+
+  scale_up_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      auto_scaling_group_id: {get_resource: my_scale_group}
+      adjustment_type: change_in_capacity
+      scaling_adjustment: 1
+      cooldown: 300
+
+  scale_down_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      auto_scaling_group_id: {get_resource: my_scale_group}
+      adjustment_type: change_in_capacity
+      scaling_adjustment: -1
+      cooldown: 300
