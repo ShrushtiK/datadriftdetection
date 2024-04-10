@@ -7,6 +7,7 @@ helm install --kube-insecure-skip-tls-verify  spark bitnami/spark --set master.r
 
 kubectl --insecure-skip-tls-verify apply -f Helms/charts/cassandra/manifests/cassandra-service.yaml
 kubectl --insecure-skip-tls-verify apply -f Helms/charts/cassandra/manifests/cassandra-statefulset.yaml
+kubectl --insecure-skip-tls-verify apply -f Helms/charts/cassandra/manifests/cassandra-job.yaml
 kubectl --insecure-skip-tls-verify apply -f Helms/charts/kafka/zookeeper-manifest.yaml
 kubectl --insecure-skip-tls-verify apply -f Helms/charts/kafka/producer-manifest.yaml
 kubectl --insecure-skip-tls-verify apply -f Helms/charts/kafka/broker-manifest.yaml
