@@ -1,6 +1,8 @@
 repositories:
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
 
 releases:
   - name: cassandra
@@ -8,3 +10,52 @@ releases:
     set:
       - name: dbUser.password
         value: cassandra
+
+  - name: zookeeper
+    namespace: default
+    chart: ./charts/kafka/zookeeper-chart
+    version: 0.1.0
+    values:
+      - ./charts/kafka/zookeeper-chart/values.yaml # This refers to the values.yaml inside the zookeeper-chart directory
+
+  # Deploy Kafka
+  - name: kafka
+    namespace: default
+    chart: ./charts/kafka/kafka-chart
+    version: 0.1.0
+    values:
+      - ./charts/kafka/kafka-chart/values.yaml # This refers to the values.yaml inside the kafka-chart directory
+
+  # Deploy Kafka Producer
+  - name: kafka-producer
+    namespace: default
+    chart: ./charts/kafka/kafka-producer-chart
+    version: 0.1.0
+    values:
+      - ./charts/kafka/kafka-producer-chart/values.yaml
+
+  - name: grafana
+    namespace: default
+    chart: grafana/grafana
+    # Deploy Grafana, no chart version , so latest
+    values:
+      - adminUser: admin
+      - adminPassword: admin
+
+  - name: spark
+    namespace: default
+    chart: bitnami/spark
+    values:
+      - master:
+          resourcesPreset: medium
+        worker:
+          resourcesPreset: medium
+        spark:
+          shuffle:
+            service:
+              enabled: true
+          dynamicAllocation:
+            enabled: true
+        image:
+          repository: sarahema/spark-scalable
+          tag: 3.6.0

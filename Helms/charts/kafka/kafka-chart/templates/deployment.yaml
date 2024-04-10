@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-deployment
+  labels:
+    app: kafka
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - name: broker
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: 9092
+        env:
+        - name: KAFKA_BROKER_ID
+          value: "{{ .Values.kafka.brokerId }}"
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: "{{ .Values.kafka.zookeeperConnect }}"
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "{{ .Values.kafka.listenerSecurityProtocolMap }}"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "{{ .Values.kafka.advertisedListeners }}"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "{{ .Values.kafka.offsetsTopicReplicationFactor }}"
+        - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+          value: "{{ .Values.kafka.transactionStateLogMinIsr }}"
+        - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "{{ .Values.kafka.transactionStateLogReplicationFactor }}"
+        - name: KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR
+          value: "{{ .Values.kafka.confluentLicenseTopicReplicationFactor }}"
+        - name: KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR
+          value: "{{ .Values.kafka.confluentBalancerTopicReplicationFactor }}"
