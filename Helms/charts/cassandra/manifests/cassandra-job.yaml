@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cassandra-script-runner
+spec:
+  template:
+    spec:
+      containers:
+      - name: cassandra-script-executor
+        image: shrushti5/custom-cassandra
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          cqlsh -u cassandra -p cassandra cassandra -f /usr/src/app/init.cql
+      restartPolicy: Never
