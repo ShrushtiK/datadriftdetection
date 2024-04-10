@@ -57,8 +57,27 @@ releases:
                 jsonData:
                   keyspace: spark_streams
                   consistency: ONE
-                  user: cassandra
-                  password: cassandra
+                  user: "cassandra"
+                  password: "cassandra"
+                secureJsonData:
+                  user: "cassandra"
+                  password: "cassandra"
+      - dashboards:
+          default:
+            cassandra-dashboard:
+              gnetId: null
+              revision: 1
+              datasource: Cassandra
+              file: ./charts/grafana/dashboard.json
+#      - dashboards:
+#          default:
+#            cassandra_dashboard:
+#              gnetId: null
+#              revision: 1
+#              datasource: Cassandra
+#              url: /etc/grafana/provisioning/dashboards/cassandra-dashboard.json
+#      - dashboardsConfigMaps:
+#          - name: ./charts/grafana/grafana-dashboards/grafana-dashboards-configmap.yaml
 
       - grafana.ini:
           paths:
