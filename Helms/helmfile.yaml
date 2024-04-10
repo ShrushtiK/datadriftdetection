@@ -11,6 +11,9 @@ releases:
       - name: dbUser.password
         value: cassandra
 
+  - name: cassandra-job
+    chart: ./charts/cassandra/manifests/
+
   - name: zookeeper
     namespace: default
     chart: ./charts/kafka/zookeeper-chart
