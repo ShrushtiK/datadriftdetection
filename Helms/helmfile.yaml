@@ -99,5 +99,9 @@ releases:
           dynamicAllocation:
             enabled: true
         image:
-          repository: sarahema/spark-scalable
-          tag: 3.6.0
+          repository: shrushti5/custom-spark
+          tag: 1.10
+
+  - name: mlflow
+    namespace: default
+    chart: ./charts/mlflow/mlflow-chart

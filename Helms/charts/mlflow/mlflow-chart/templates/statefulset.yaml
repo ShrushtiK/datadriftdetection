@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mlflow-server
+spec:
+  serviceName: "mlflow-server"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow-server
+  template:
+    metadata:
+      labels:
+        app: mlflow-server
+    spec:
+      containers:
+      - name: mlflow-server
+        image: shrushti5/custom-mlflow:1.1
+        command: ["mlflow", "server"]
+        args: ["--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "mysql+pymysql://admin:admin@mysql-svc:3306/mlflow-metrics", "--default-artifact-root", "s3://arn:aws:s3:us-east-1:871153879602:accesspoint/models"]
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MLFLOW_S3_ENDPOINT_URL
+          value: "http://"
+        - name: AWS_DEFAULT_REGION
+          value: "us-east-1"
+        - name: AWS_ACCESS_KEY_ID
+          value: ""
+        - name: AWS_SECRET_ACCESS_KEY
+          value: ""
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+--- 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql/mysql-server:latest
+          env:
+            - name: MYSQL_DATABASE
+              value: mlflow-metrics
+            - name: MYSQL_USER
+              value: admin
+            - name: MYSQL_PASSWORD
+              value: admin
+            - name: MYSQL_ROOT_PASSWORD
+              value: admin
+          volumeMounts:
+            - name: mysql-pvc
+              mountPath: "/var/lib/mysql"
+      volumes:
+        - name: mysql-pvc
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-svc
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306

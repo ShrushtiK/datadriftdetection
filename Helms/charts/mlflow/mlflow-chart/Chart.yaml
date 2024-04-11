@@ -1,0 +1,4 @@
+apiVersion: v2
+name: zookeeper-chart
+version: 0.1.0
+description: A Helm chart for MLflow Deployment and Service with mysql for backend and S3 for artifacts
