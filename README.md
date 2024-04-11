@@ -33,6 +33,12 @@ Spark executes 3 different applications:
 2. Training a ML model with the historical data received from Cassandra and storing the trained model on a S3 bucket in AWS
 3. Loading the trained ML model from the S3 bucket and testing the model on the coming data stream from Kafka, and producing an alert when a drift is detected
 
+##### MLSpark
+
+MLSpark is a native library in Apache Spark which is used for performing Machine Learning applications by using the native Dataframe (RDD abstractions) for working with the data. 
+
+Our ML model from this library is a GBTRegressor, which is a Boosted Decision Trees Regressor. The model predict the next timestamp values for each feature and then compares it with the true value of each feature, respectively. We designed the drift detection based on a threshold approach, where the difference between the model prediction and the target value is compared to a set threshold value and triggers an alert for the drift.
+
 #### Cassandra Database
 
 Cassandra is a distributed database which is designed to perform well on timeseries data. Cassandra is designed to partition data on distributed nodes of Cassandra in a ring quorum. The timestamp clustering key in Cassandra can be used to order data within a partition since te timestamp is chronological and already ordered. 
@@ -94,11 +100,23 @@ HERE ADD TECHNOLOGIES AND THEIR VERISONS:
 
 
 ### Infrastructure
-Managed to have our components aka Spark, Kafka, Cassandra and Data Generator up via docker compose and succesfully able to update Cassandra with our dataset values via a Spark job
 
+[comment]: <> (Managed to have our components aka Spark, Kafka, Cassandra and Data Generator up via docker compose and successfully able to update Cassandra with our dataset values via a Spark job)
 
+![images/infra_cloud.png](images/infra_cloud.png)
+
+The services described above are deployed in a Kubernetes cluster with the Cluster Orchestrator K3S, which is automatically setup and deployed in our Terraform configuration. Terraform is a declarative way for automatically setting up the infrastructure on our Cloud provider, OpenStack. In addition, we also use an S3 bucket on Amazon Web Services with which Mlflow communicates for storage purposes. On OpenStack reside, after being defined in Terraform, virtual machines on which the Kubernetes cluster is deployed. Inside the Kubernetes cluster one VM is configured as the Spark Master in the Spark Cluster and the other ones are configured as Spark Workers, which will register with the Spark Master and bind to it inside the Spark cluster. The other services: Mlflow, Kafka, Cassandra, Grafana are also deployed in the Kubernetes cluster and distributed across the VMs. For configuring all these services, we mostly use custom Docker images on which we pre-configure the dependencies and the environments. The Docker images are also used in our Docker-compose deployment which deploys all the containers and manages their environments, connections, networking, and replication. The Docker images are kept on the Cloud, in DockerHub.
 
 ### UI, Historical & Streaming Data
+
+Historical data from Cassandra:
+
+Stream data from Kafka to Spark, and from Spark to Cassandra:
+
+Grafana Dashboards for UI:
+
+Spark UI for Spark Application overview: hardware resources consumed, data partitioning and shuffling, application status, worker scalability
+
 
 ### Core Algorithm & Data location awareness
 
@@ -130,8 +148,14 @@ Data Replication: Our Spark setup does not need data replication on Spark, becau
 ### Scalability & Fault tolerance
 In this section, we provide answers to the following questions: 
 - What will happen if one of the nodes goes down? 
+Spark handles horizontal scalability for the worker nodes on each VM. If a worker goes down, then Spark is able to repurpose the worker's resources to a newly spawned worker and also initialize the worker with the DAGs of the previous worker, which makes Spark fault-tolerant. If a VM goes down in OpenStack, then the state can be recuperated by reapplying the Terraform manifests. The still running VMs will not be reconfigured and they will keep their data, but the old VM's data will not be restored outside the Spark Cluster.
+
 - What is happening on the level of data distribution? 
+Data is partitioned into RDDs by Spark and shuffled to different Spark workers. The data is distributed and processed in parallel by multiple workers. Since data is stored in RDD, which are immutable and in-memory while processed, the distribution of the data is also fault-tolerant.
+
 - What are the limits of your implementation and how can those be addressed? (CPU, RAM, I/O etc.)
+One limit is the hardware, which is restricted to 5 VMs and 8 cores on OpenStack. Therefore, even though we allocate those cores (1 core per executor in Spark) to the VMs, Spark will be able to scale up until all the given hardware resources are exhausted, after which the application running on Spark and overly soliciting it will fail alongside the worker VMs.
+
 
 ## Results
 e.g. single machine vs multi-machine cluster
