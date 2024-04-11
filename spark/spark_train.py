@@ -39,7 +39,7 @@ mlflow.set_experiment("Data drift")
 def getSparkSession():
     spark = SparkSession.builder \
         .appName("Training Model") \
-        .config("spark.kubernetes.container.image", "sarahema/spark-scalable:4.1.0") \
+        .config("spark.kubernetes.container.image", "shrushti5/custom-spark:2.1") \
         .config("spark.kubernetes.namespace", "default") \
         .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                     "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
@@ -48,15 +48,12 @@ def getSparkSession():
         .config("spark.cassandra.auth.username", "cassandra") \
         .config("spark.cassandra.auth.password", "cassandra") \
         .config("spark.dynamicAllocation.enabled", "true") \
-        .config("spark.hadoop.fs.s3a.access.key", "AKIA4VVGRJIZKFCV4KMA") \
-        .config("spark.hadoop.fs.s3a.secret.key", "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") \
-        .config("spark.hadoop.fs.s3a.endpoint", "s3.us-east-1.amazonaws.com") \
         .getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")
 
     hadoopConf = spark.sparkContext._jsc.hadoopConfiguration()
-    hadoopConf.set('fs.s3a.access.key', "AKIA4VVGRJIZKFCV4KMA")
-    hadoopConf.set('fs.s3a.secret.key', "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")
+    hadoopConf.set('fs.s3a.access.key', os.environ["AWS_ACCESS_KEY_ID"])
+    hadoopConf.set('fs.s3a.secret.key', os.environ["AWS_SECRET_ACCESS_KEY"])
     hadoopConf.set('fs.s3.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
     hadoopConf.set("fs.s3a.connection.ssl.enabled", "true")
     hadoopConf.set("fs.s3a.path.style.access", 'true')

@@ -83,6 +83,9 @@ releases:
           paths:
             provisioning: /etc/grafana/provisioning
 
+  - name: mlflow
+    namespace: default
+    chart: ./charts/mlflow/mlflow-chart
 
   - name: spark
     namespace: default
@@ -100,8 +103,5 @@ releases:
             enabled: true
         image:
           repository: shrushti5/custom-spark
-          tag: 1.11
+          tag: 2.1
 
-  - name: mlflow
-    namespace: default
-    chart: ./charts/mlflow/mlflow-chart
