@@ -11,19 +11,121 @@ A diagram of the project's architecture can be found within the repository in th
 
 We chose to use a real-world dataset, as described in (Street and Kim, 2001). The dataset can be found [here](https://www.win.tue.nl/~mpechen/data/DriftSets/).
 
+The project is a scalable implementation of a drift-detection machine learning algorithm.
+
+![images/infra_pipeline.png](images/infra_pipeline.png)
+
+
+#### Apache Kafka
+The data generator consists of a data producer, which is implemented with Apache Kafka and which feeds the live data stream into a Kafka Queue. The queue persists the data in case the consumer end is not able to receive it,a nd it also makes sure that the data points are sent in the order that they were produced. The Kafka broker manages how the data is distributed from the producers to the consumers based on kafka topics, where the producers publish data on a certain topic and the consumers subscribe to a topic from which they receive data. Kafka can also be distributed, where multiple producers publish streams of data to topics, the data streams are stored in multiple distributed queues with data supporting replication and streaming the data to multiple consumers. 
+
+#### Apache Spark
+
+The Kafka consumer is on the Spark service. Spark is a distributed engine for parallelized, fault-tolerance and resilient data processing. It is capable of:
+1. Distributed Computing: The data is processed in parallel by multiple nodes
+2. Horizontal Scalability: The Spark manager is able to coordinate and scale up and down the nodes which are using the hardware resources
+3. In-Memory Computing: The data is partitioned into Resilient Distributed Datasets (RDDs) which reside in-memory while it is processed, avoiding the costly computation of storing the data on disk. The RDDs are immutable and fault-tolerant
+4. Data Lineage: New workers are updated with information about the DAGs applied on the RDDs of the parent worker, and therefore do not need to restart the application from the point of data partitioning and task distribution
+5. Load Balancing: The Spark scheduler can distribute hardware resources to tasks based on the tasks' computational costs
+
+Spark executes 3 different applications:
+1. Streaming data received from Kafka by first processing and storing it into a Dataframe and then streaming the processed data to the Cassandra database
+2. Training a ML model with the historical data received from Cassandra and storing the trained model on a S3 bucket in AWS
+3. Loading the trained ML model from the S3 bucket and testing the model on the coming data stream from Kafka, and producing an alert when a drift is detected
+
+#### Cassandra Database
+
+Cassandra is a distributed database which is designed to perform well on timeseries data. Cassandra is designed to partition data on distributed nodes of Cassandra in a ring quorum. The timestamp clustering key in Cassandra can be used to order data within a partition since te timestamp is chronological and already ordered. 
+
+Cassandra stores three different tables which are used for both persisting data for fault-tolerence and also for communicating with Grafana to display columns from the tables in Grafana dashboards. Two tables are populated by applications in Spark: dataframe_test and drift_analysis. One table, dataframe_train, is populated by a job in the Kubernetes cluster which triggers whe the Cassandra service is up and running.
+
+The tables have the following configuration:
+
+
+```cassandraql
+        CREATE TABLE IF NOT EXISTS spark_streams.dataframe_train (
+            id UUID,
+            timestamp TIMESTAMP,
+            feature_0 FLOAT,
+            feature_1 FLOAT,
+            feature_2 FLOAT,
+            label FLOAT,
+            PRIMARY KEY ((id), timestamp)
+        ) WITH CLUSTERING ORDER BY (timestamp DESC);
+```
+The dataframe_train table is comprised by an `id` column which is an ascending unique number for each entry, `timestamp` column for keeping track when the data point was producer by Kafka, `feature_0`,`feature_1`,`feature_2` are the processed features from the drift dataset, and `label` is the target value from the drift dataset. The table is ordered from the latest data point to the first data point received from Kafka. Since Cassandra queries the location of the data it wants to retrieve by going through each node consecutively in the quorum ring, we want to have the latest data in the closest node in the ring so that the query will not go through all the nodes in the ring until it finds the latest data it needs to train on.
+
+```cassandraql
+        CREATE TABLE IF NOT EXISTS spark_streams.dataframe_test (
+            id UUID,
+            timestamp TIMESTAMP,
+            feature_0 FLOAT,
+            feature_1 FLOAT,
+            feature_2 FLOAT,
+            label FLOAT,
+            PRIMARY KEY ((id), timestamp)
+        ) WITH CLUSTERING ORDER BY (timestamp DESC);
+
+
+```
+The dataframe_test is a simplified version of the dataframe_train, since we need to store and query fewer columns for the test results.
+
+```cassandraql
+    
+        CREATE TABLE IF NOT EXISTS spark_streams.drift_analysis (
+            id UUID,
+            label FLOAT,
+            prediction FLOAT,
+            feature_0 FLOAT,
+            feature_1 FLOAT,
+            feature_2 FLOAT,
+            timestamp TIMESTAMP,
+            PRIMARY KEY ((id), timestamp)
+        ); 
+```
+
+The drift_analysis table contains a `prediction` column in addition.
+
+#### Grafana
+
+Grafana is connected to Cassandra with which it can communicate by cassandra query language in order to query data and display it in custom-made dashboards. Grafana functions as our UI for displaying the data collected from our Ml jobs.
+
+HERE ADD TECHNOLOGIES AND THEIR VERISONS:
+
+
 ### Infrastructure
 Managed to have our components aka Spark, Kafka, Cassandra and Data Generator up via docker compose and succesfully able to update Cassandra with our dataset values via a Spark job
+
+
 
 ### UI, Historical & Streaming Data
 
 ### Core Algorithm & Data location awareness
-In this section, we provide answers to the following questions: 
-- How is the data distributed? 
-- Why is the choice made for this particular dataset? 
-- What is the partitioning schema? 
-- If you are using full data replication , then why is this choice made? 
-- Are you processing data that are located on the same node? If not, why?
-- How can you prove data location awareness in your project?
+
+
+Dataset: Synthetic data for data and concept drift. The dataset was chosen because it was previously used in studies on drift detection, and therefore can make our project's results comparable to a baseline. The dataset also covers both data and concept drift.
+Spark RDD vs Dataframe - we use Dataframes: RDDs are immutable and distributed collections of data stored on the spark workers. Dataframes are higher-level abstractions of RDDs which are organized into tables of columns. The MLSpark library also defaults to using Dataframes.
+Fault-tolerance: When a worker node fails, the DAGs (transformations of data) applied on the local RDDs of the worker are saved so that they can be recomputed when the new worker spawns and resumes the DAG tasks of the previous worker.
+![images/lineage.png](images/lineage.png)
+Data Locality Awareness: The key-value RDDs have their keys hashed so that the Spark context is aware of the location of each RDD after the partitioning of the data into RDDs and the distribution of the RDDs to the different workers. Data locality has different levels in Spark, which is configurable, but we kept the default level. The different levels of data locality in Spark are:
+1. NO_PREF: no locality preference; it starts from PROCESS_LOCAL and changes to higher levels by necessity
+2. PROCESS_LOCAL: process RDDs from the same JVM
+3. NODE_LOCAL: process RDDs from the same spark node, possibly from different executors from the same node. Adds network latency because data needs to travel
+4. RACK_LOCAL: process RDDs from the same rack, but different servers.
+5. ANY: process RDDs from another network altogether
+
+In out case, setting the data locality to NO_PREF means that Spark will schedule to process on the same executor the data stream stored in the Dataframes on Spark and going out to Cassandra. Since we use the setting `spark.locality.wait(default value is 3s)`, the Spark manager will wait 3 seconds of unresponsiveness from the worker (if the worker is stuck in one data transformation and delays the next data point incoming) until it will redirect the load of the RDDs partition to another executor on the same node (PROCESS_LOCAL). If the whole worker node runs out of hardware resources, then the RDDs will be redirected to another worker node (NODE_LOCAL). 
+
+Data locality awareness can be observed in the Spark UI, which displays the applications submitted on Spark and the allocated resources for running the application (executors and number of cores, which run in parallel), in addition to displaying the read and write operations and the shuffling of RDDs. Less shuffling in the read-write operations are a sign that the data locality level is set in such a way that the jobs can run on the designated executors without an overhead of moving RDDs between executors.
+
+![images/data_locality.png](images/data_locality.png)
+Data Partitioning: The RDDs are built based on a partition schema for the data. Since we are using a Dataframe, the partitioning schema is based on a column of the table. We chose te column 'label', which takes binary values 0 and 1, as the partitioning schema column, because this will enforce a minimum of two RDDs for the data, scalable to subsets of RDD(0) and RDD(1) if the Spark manager redistributes the workload to other executors. The column 'label' was chosen because the other columns have unique values, which would lead to many inefficient RDD partitions. How this will work in our ML setup jobs is:
+- One executor will get the data with the RDDs formed out of  the rows in Cassandra with the 'label' value 0, and the other executor will get the partitioning with the 'label' value 1.
+- The workers calculate the gradients based on their specific RDD partition, and then return the calculated gradient at the end of each parallel epoch to the master.
+- The model on the master node will be updated in parallel by each worker's gradient, by data containing both label = 1 and label = 0.
+
+Data Replication: Our Spark setup does not need data replication on Spark, because Spark already has Fault-tolerance and the data can be restored in case of node failure. In addition, we store the data in the Cassandra database to persist the data outside Spark as well.
+
 
 ### Scalability & Fault tolerance
 In this section, we provide answers to the following questions: 
@@ -65,39 +167,6 @@ docker compose up --build --scale spark-worker=4
 - Connected Spark with Kafka, creation of data stream and dataframe  on Kube
 - Connecting Spark with CassandraDB: still needs to solve autentication problem with CassandraDB  on Kube
 
-
-Data location awareness.
-For this deadline we expect you to implement the algorithm(s) of your choice, in a
-scalable fashion such that they can be executed on your pipeline. Use the data
-sets that you obtained from the previous deadline. You should have, at the very
-least, a basic version of your algorithm running and demonstrate it during the
-computer labs. Also think about the next deadline. The very important principal
-questions for this deadline are:
-○ How is your data distributed?
-○ Why is the choice made for this particular dataset?
-○ What is the partitioning schema?
-○ If you are using full data replication , then why is this choice made?
-○ Are you processing data that are located on the same node? If not, why?
-○ How can you prove data location awareness in your project?
-
-Dataset: Synthetic data for data and concept drift. 
-Spark RDD vs Dataframe - we use Dataframes: RDDs are immutable and distributed collections of data stored on the spark workers. Dataframes are higher-level abstractions of RDDs which are organized into tables of columns. The MLSpark library also defaults to using Dataframes.
-Fault-tolerance: When a worker node fails, the DAGs (transformations of data) applied on the local RDDs of the worker are saved so that they can be recomputed when the new worker spawns and resumes the DAG tasks of the previous worker.
-![images/lineage.png](images/lineage.png)
-Data Locality Awareness: The key-value RDDs have their keys hashed so that the Spark context is aware of the location of each RDD after the partitioning of the data into RDDs and the distribution of the RDDs to the different workers. Data locality has different levels in Spark, which is configurable, but we kept the default level. The different levels of data locality in Spark are:
-1. NO_PREF: no locality preference; it starts from PROCESS_LOCAL and changes to higher levels by necessity
-2. PROCESS_LOCAL: process RDDs from the same JVM
-3. NODE_LOCAL: process RDDs from the same spark node, possibly from different executors from the same node. Adds network latency because data needs to travel
-4. RACK_LOCAL: process RDDs from the same rack, but different servers.
-5. ANY: process RDDs from another network altogether
-
-In out case, setting the data locality to NO_PREF means that Spark will schedule to process on the same executor the data stream stored in the Dataframes on Spark and going out to Cassandra. Since we use the setting `spark.locality.wait(default value is 3s)`, the Spark manager will wait 3 seconds of unresponsiveness from the worker (if the worker is stuck in one data transformation and delays the next data point incoming) until it will redirect the load of the RDDs partition to another executor on the same node (PROCESS_LOCAL). If the whole worker node runs out of hardware resources, then the RDDs will be redirected to another worker node (NODE_LOCAL). 
-
-![images/data_locality.png](images/data_locality.png)
-Data Partitioning: The RDDs are built based on a partition schema for the data. Since we are using a Dataframe, the partitioning schema is based on a column of the table. We chose te column 'label', which takes binary values 0 and 1, as the partitioning schema column, because this will enforce a minimum of two RDDs for the data, scalable to subsets of RDD(0) and RDD(1) if the Spark manager redistributes the workload to other executors. The column 'label' was chosen because the other columns have unique values, which would lead to many inefficient RDD partitions. How this will work in our ML setup jobs is:
-- One executor will get the data with the RDDs formed out of  the rows in Cassandra with the 'label' value 0, and the other executor will get the partitioning with the 'label' value 1.
-- The workers calculate the gradients based on their specific RDD partition, and then return the calculated gradient at the end of each parallel epoch to the master.
-- The model on the master node will be updated in parallel by each worker's gradient, by data containing both label = 1 and label = 0.
 
 
 setup_spark.sh:
