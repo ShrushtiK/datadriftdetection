@@ -1,13 +1,44 @@
-# DataAndConceptDriftDetection
+# ECiDA: Data and Concept Drift Detection
 
+## Introduction 
+In the dynamic field of machine learning, even the most exceptional models encounter hidden risks known as data and concept drift. Data drift refers to a change in the statistical properties of data, rendering predictions outdated. Concept drift indicates a fundamental shift over time in the relationship between the input and the target.
 
+This project is in collaboration with the ECiDA platform (Evolutionary Changes in Data Analysis). Our main aim is to uncover the aforementioned risks by using a distributed monitoring solution. We focus on data drift detection. After training a machine learning model using historical data, we then continuously analyze data streams to detect statistical deviations. This proactive approach enables timely responses, such as retraining models and adjusting data pipelines, ensuring that machine learning models remain accurate and effective in a constantly evolving world.
 
-## Deadline 1 - Architecture
-Uploaded the architecture of the project in "Scalable Computing Project Architecture.pdf"
+## Implementation
+### Architecture
+A diagram of the project's architecture can be found within the repository in the form of a PDF. It can be accessed [here]("Scalable Computing Project Architecture.pdf").
 
-## Deadline 2 - Infrastructure
+We chose to use a real-world dataset, as described in (Street and Kim, 2001). The dataset can be found [here](https://www.win.tue.nl/~mpechen/data/DriftSets/).
+
+### Infrastructure
 Managed to have our components aka Spark, Kafka, Cassandra and Data Generator up via docker compose and succesfully able to update Cassandra with our dataset values via a Spark job
 
+### UI, Historical & Streaming Data
+
+### Core Algorithm & Data location awareness
+In this section, we provide answers to the following questions: 
+- How is the data distributed? 
+- Why is the choice made for this particular dataset? 
+- What is the partitioning schema? 
+- If you are using full data replication , then why is this choice made? 
+- Are you processing data that are located on the same node? If not, why?
+- How can you prove data location awareness in your project?
+
+### Scalability & Fault tolerance
+In this section, we provide answers to the following questions: 
+- What will happen if one of the nodes goes down? 
+- What is happening on the level of data distribution? 
+- What are the limits of your implementation and how can those be addressed? (CPU, RAM, I/O etc.)
+
+## Results
+e.g. single machine vs multi-machine cluster
+
+## References
+W. Street, Y. Kim, **A streaming ensemble algorithm (SEA) for large- scale classification**, in: KDD'01, 7th International Conference on Knowledge Discovery and Data Mining, San Francisco, CA, August 2001, pp. 377-382.
+
+
+## Existing notes (delete when done!):
 ## Deadline 3 
 Created Spark job for training and testing a GBTRegressor on the dataset and check for potential drift by seeing the biggest drops in prediction accuracies. But, the event is manually triggered by "exec"-ing into the spark-master. Without the support of an event-based architecture, it seems very hard to have a functional and automated pipeline for the project. For instance
 - triggering the training job once we have "enough historical data" in the database
