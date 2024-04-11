@@ -34,9 +34,44 @@ docker compose up --build --scale spark-worker=4
 - Connected Spark with Kafka, creation of data stream and dataframe  on Kube
 - Connecting Spark with CassandraDB: still needs to solve autentication problem with CassandraDB  on Kube
 
+
+Data location awareness.
+For this deadline we expect you to implement the algorithm(s) of your choice, in a
+scalable fashion such that they can be executed on your pipeline. Use the data
+sets that you obtained from the previous deadline. You should have, at the very
+least, a basic version of your algorithm running and demonstrate it during the
+computer labs. Also think about the next deadline. The very important principal
+questions for this deadline are:
+○ How is your data distributed?
+○ Why is the choice made for this particular dataset?
+○ What is the partitioning schema?
+○ If you are using full data replication , then why is this choice made?
+○ Are you processing data that are located on the same node? If not, why?
+○ How can you prove data location awareness in your project?
+
+Dataset: Synthetic data for data and concept drift. 
+Spark RDD vs Dataframe - we use Dataframes: RDDs are immutable and distributed collections of data stored on the spark workers. Dataframes are higher-level abstractions of RDDs which are organized into tables of columns. The MLSpark library also defaults to using Dataframes.
+Fault-tolerance: When a worker node fails, the DAGs (transformations of data) applied on the local RDDs of the worker are saved so that they can be recomputed when the new worker spawns and resumes the DAG tasks of the previous worker.
+![images/lineage.png](images/lineage.png)
+Data Locality Awareness: The key-value RDDs have their keys hashed so that the Spark context is aware of the location of each RDD after the partitioning of the data into RDDs and the distribution of the RDDs to the different workers. Data locality has different levels in Spark, which is configurable, but we kept the default level. The different levels of data locality in Spark are:
+1. NO_PREF: no locality preference; it starts from PROCESS_LOCAL and changes to higher levels by necessity
+2. PROCESS_LOCAL: process RDDs from the same JVM
+3. NODE_LOCAL: process RDDs from the same spark node, possibly from different executors from the same node. Adds network latency because data needs to travel
+4. RACK_LOCAL: process RDDs from the same rack, but different servers.
+5. ANY: process RDDs from another network altogether
+
+In out case, setting the data locality to NO_PREF means that Spark will schedule to process on the same executor the data stream stored in the Dataframes on Spark and going out to Cassandra. Since we use the setting `spark.locality.wait(default value is 3s)`, the Spark manager will wait 3 seconds of unresponsiveness from the worker (if the worker is stuck in one data transformation and delays the next data point incoming) until it will redirect the load of the RDDs partition to another executor on the same node (PROCESS_LOCAL). If the whole worker node runs out of hardware resources, then the RDDs will be redirected to another worker node (NODE_LOCAL). 
+
+![images/data_locality.png](images/data_locality.png)
+Data Partitioning: The RDDs are built based on a partition schema for the data. Since we are using a Dataframe, the partitioning schema is based on a column of the table. We chose te column 'label', which takes binary values 0 and 1, as the partitioning schema column, because this will enforce a minimum of two RDDs for the data, scalable to subsets of RDD(0) and RDD(1) if the Spark manager redistributes the workload to other executors. The column 'label' was chosen because the other columns have unique values, which would lead to many inefficient RDD partitions. How this will work in our ML setup jobs is:
+- One executor will get the data with the RDDs formed out of  the rows in Cassandra with the 'label' value 0, and the other executor will get the partitioning with the 'label' value 1.
+- The workers calculate the gradients based on their specific RDD partition, and then return the calculated gradient at the end of each parallel epoch to the master.
+- The model on the master node will be updated in parallel by each worker's gradient, by data containing both label = 1 and label = 0.
+
+
 setup_spark.sh:
 
-Install and configure Spark, it downloads the custum Spark docker image from DockerHub
+Install and configure Spark, it downloads the custom Spark docker image from DockerHub
 ```
 helm install spark bitnami/spark
 
