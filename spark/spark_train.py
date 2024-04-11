@@ -39,7 +39,7 @@ mlflow.set_experiment("Data drift")
 def getSparkSession():
     spark = SparkSession.builder \
         .appName("Training Model") \
-        .config("spark.kubernetes.container.image", "shrushti5/custom-spark:2.1") \
+        .config("spark.kubernetes.container.image", "sarahema/spark_scalable:4.2.0") \
         .config("spark.kubernetes.namespace", "default") \
         .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                     "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
@@ -82,8 +82,8 @@ trainingData = data_with_row_number.filter(col("row_num") <= split_index).drop("
 testData = data_with_row_number.filter(col("row_num") > split_index).drop("row_num")
 
 # Repartition the DataFrame to ensure it's distributed across executors
-trainingData = trainingData.repartition("timestamp")
-testData = testData.repartition("timestamp")
+trainingData = trainingData.repartition("label")
+testData = testData.repartition("label")
 
 # Prepare the VectorAssembler as part of the pipeline stages
 featureAssembler = VectorAssembler(
