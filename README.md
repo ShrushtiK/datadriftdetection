@@ -163,6 +163,42 @@ e.g. single machine vs multi-machine cluster
 ## References
 W. Street, Y. Kim, **A streaming ensemble algorithm (SEA) for large- scale classification**, in: KDD'01, 7th International Conference on Knowledge Discovery and Data Mining, San Francisco, CA, August 2001, pp. 377-382.
 
+## Contributions
+### Shrushti
+
+### Elena
+
+### Sarah
+#### Deadline 1:
+- Researched the technologies and their fit for the project requirements
+- Designed the architecture of the pipeline and the infrastructure
+- Created the initial diagrams for the pipeline and infrastructure
+
+#### Deadline 2:
+- Docker-compose for deploying Kafka, Cassandra, and Spark
+
+#### Deadline 3
+- Scripted the Spark job for spark_stream.py
+- Fixed Kafka producer
+
+#### Deadline 4
+- Integration of Grafana and connectivity with Cassandra
+- Cassandra table redesign for storing historical data and saving predictions
+- Cassandra partitioning (full replication)
+- Scripted the Spark job for spark_train.py and spark_test.py with the MLSpark, not finished
+
+#### Deadline 5-6:
+- Deployed Airflow on Kube (Archived)
+- Deployed Spark on Kube
+- Deployed Kafka  on Kube
+- Deployed CassandraDB  on Kube
+- Deployed Kafka Producer  on Kube
+- Configure and submit the data stream job on Spark  on Kube with spark-submit command
+- Connected Spark with Kafka, creation of data stream and dataframe on Kube
+- Connecting Spark with CassandraDB, authentication
+- Deployed Grafana and automatised connection with Cassandra
+- Automized the deployment of all Kube resources with Helmfile
+- OpenStack Heat Orchestration for Autoscaling worker VMs, with Terraform (Archived)
 
 ## Existing notes (delete when done!):
 ## Deadline 3 
@@ -175,21 +211,6 @@ For now, the testing has been done via the following
 ```
 docker compose up --build --scale spark-worker=4
 ```
-
-## Deadline 4
-- Integration of Grafana and connectivity with Cassandra
-- Integration of Airflow for Spark jobs (training and testing)
-- Cassandra table redesign for storing historical data and saving predictions + Cassandra partitioning (full replication)
-
-## Deadline 5-6:
-- Deployed Airflow on Kube
-- Deployed Spark on Kube
-- Deployed Kafka  on Kube
-- Deployed CassandraDB  on Kube
-- Deployed Kafka Producer  on Kube
-- Submit the data stream job on Spark  on Kube
-- Connected Spark with Kafka, creation of data stream and dataframe  on Kube
-- Connecting Spark with CassandraDB: still needs to solve autentication problem with CassandraDB  on Kube
 
 
 
