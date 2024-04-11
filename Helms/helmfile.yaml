@@ -89,9 +89,9 @@ releases:
     chart: bitnami/spark
     values:
       - master:
-          resourcesPreset: medium
+          resourcesPreset: large
         worker:
-          resourcesPreset: medium
+          resourcesPreset: large
         spark:
           shuffle:
             service:
