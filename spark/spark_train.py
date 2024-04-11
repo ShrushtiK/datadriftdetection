@@ -13,8 +13,8 @@ import math
 from pyspark.sql.window import Window
 
 import os
-os.environ["AWS_ACCESS_KEY_ID"] = ""
-os.environ["AWS_SECRET_ACCESS_KEY"] = ""
+os.getenv("AWS_ACCESS_KEY_ID")
+os.getenv("AWS_SECRET_ACCESS_KEY")
 
 
 # def create_mlflow_experiment(exp_name):
@@ -39,7 +39,7 @@ mlflow.set_experiment("Data drift")
 def getSparkSession():
     spark = SparkSession.builder \
         .appName("Training Model") \
-        .config("spark.kubernetes.container.image", "shrushti5/custom-spark:1.10") \
+        .config("spark.kubernetes.container.image", "shrushti5/custom-spark:1.11") \
         .config("spark.kubernetes.namespace", "default") \
         .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                     "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \

@@ -100,7 +100,7 @@ releases:
             enabled: true
         image:
           repository: shrushti5/custom-spark
-          tag: 1.10
+          tag: 1.11
 
   - name: mlflow
     namespace: default

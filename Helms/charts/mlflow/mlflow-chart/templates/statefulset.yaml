@@ -22,15 +22,12 @@ spec:
         ports:
         - containerPort: 5000
         env:
-        - name: MLFLOW_S3_ENDPOINT_URL
-          value: "http://"
         - name: AWS_DEFAULT_REGION
           value: "us-east-1"
         - name: AWS_ACCESS_KEY_ID
           value: ""
         - name: AWS_SECRET_ACCESS_KEY
           value: ""
-
 ---
 
 apiVersion: v1
