@@ -7,7 +7,7 @@ import uuid
 # CHANGE 3
 import arff, numpy as np
 from datetime import datetime 
-
+import os
 
 # CHANGE 1
 index=0
@@ -29,7 +29,7 @@ def getData(driftType, streamData, batchSize=10):
     else:
         return # TODO: raise error?
 
-    path='DriftSets/'+file
+    path='/app/DriftSets/'+file
     data = arff.load(open(path, 'r'))['data']
 
     # transform to numpy array
@@ -45,12 +45,7 @@ def getData(driftType, streamData, batchSize=10):
     results=[]
     global index
     for i in range(index, index+iter):
-        # results.append(data[i])
         unique_id = str(uuid.uuid4())
-
-        # dt = datetime.datetime.now(timezone.utc)
-        # utc_time = dt.replace(tzinfo=timezone.utc)
-        # utc_timestamp = utc_time.timestamp() 
         ts = datetime.now().isoformat()
 
         results = { 'id': unique_id,
@@ -61,12 +56,7 @@ def getData(driftType, streamData, batchSize=10):
                     'feature_2': round(float(data[i][2]), 3),
                     'label': round(float(data[i][3]), 3)
         }
-        # results = { 'id': unique_id,
-        #     'feature_0': round(float(data[i][0]), 3),
-        #     'feature_1': round(float(data[i][1]), 3),
-        #     'feature_2': round(float(data[i][2]), 3),
-        #     'label': round(float(data[i][3]), 3)
-        #     }
+
         index+=1
 
         producer.send('data_stream', results)
@@ -76,7 +66,7 @@ def getData(driftType, streamData, batchSize=10):
 
 
 producer = KafkaProducer(
-    bootstrap_servers=['broker:29092'],
+    bootstrap_servers=['kafka-service:9092'],
                         max_block_ms=5000,
                         api_version=(0, 11, 5),
                          value_serializer=lambda x:
@@ -85,6 +75,7 @@ producer = KafkaProducer(
 while True:
     # CHANGE 2: we send the data as a whole to make the approach more dynamic
     # TODO: (drift type 1, stream data. How will the user give this input?)
-
+    print(os.getcwd())
+    print(os.listdir())
     getData(1, True)
 

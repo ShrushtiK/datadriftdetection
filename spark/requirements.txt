@@ -2,3 +2,5 @@ cassandra-driver==3.28.0
 spark==0.2.1
 pyspark==3.4.1
 numpy
+mlflow
+boto3

@@ -1,6 +1,8 @@
 repositories:
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
 
 releases:
   - name: cassandra
@@ -8,3 +10,98 @@ releases:
     set:
       - name: dbUser.password
         value: cassandra
+
+  - name: cassandra-job
+    chart: ./charts/cassandra/manifests/
+
+  - name: zookeeper
+    namespace: default
+    chart: ./charts/kafka/zookeeper-chart
+    version: 0.1.0
+    values:
+      - ./charts/kafka/zookeeper-chart/values.yaml # This refers to the values.yaml inside the zookeeper-chart directory
+
+  # Deploy Kafka
+  - name: kafka
+    namespace: default
+    chart: ./charts/kafka/kafka-chart
+    version: 0.1.0
+    values:
+      - ./charts/kafka/kafka-chart/values.yaml # This refers to the values.yaml inside the kafka-chart directory
+
+  # Deploy Kafka Producer
+  - name: kafka-producer
+    namespace: default
+    chart: ./charts/kafka/kafka-producer-chart
+    version: 0.1.0
+    values:
+      - ./charts/kafka/kafka-producer-chart/values.yaml
+
+  - name: grafana
+    namespace: default
+    chart: grafana/grafana
+    values:
+      - adminUser: admin
+      - adminPassword: admin
+      - plugins:
+          - hadesarchitect-cassandra-datasource
+      - datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+              - name: Cassandra
+                type: hadesarchitect-cassandra-datasource
+                access: proxy
+                url: cassandra.default.svc.cluster.local:9042
+                isDefault: true
+                jsonData:
+                  keyspace: spark_streams
+                  consistency: ONE
+                  user: "cassandra"
+                  password: "cassandra"
+                secureJsonData:
+                  user: "cassandra"
+                  password: "cassandra"
+      - dashboards:
+          default:
+            cassandra-dashboard:
+              gnetId: null
+              revision: 1
+              datasource: Cassandra
+              file: ./charts/grafana/dashboard.json
+#      - dashboards:
+#          default:
+#            cassandra_dashboard:
+#              gnetId: null
+#              revision: 1
+#              datasource: Cassandra
+#              url: /etc/grafana/provisioning/dashboards/cassandra-dashboard.json
+#      - dashboardsConfigMaps:
+#          - name: ./charts/grafana/grafana-dashboards/grafana-dashboards-configmap.yaml
+
+      - grafana.ini:
+          paths:
+            provisioning: /etc/grafana/provisioning
+
+  - name: mlflow
+    namespace: default
+    chart: ./charts/mlflow/mlflow-chart
+
+  - name: spark
+    namespace: default
+    chart: bitnami/spark
+    values:
+      - master:
+          resourcesPreset: none
+        worker:
+          resourcesPreset: none
+        spark:
+          shuffle:
+            service:
+              enabled: true
+          dynamicAllocation:
+            enabled: true
+        image:
+          repository: shrushti5/custom-spark
+          tag: 2.15
+

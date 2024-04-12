@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: confluentinc/cp-server
+  tag: 7.4.0
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 9092
+
+kafka:
+  brokerId: "1"
+  zookeeperConnect: "zookeeper-service:2181"
+  listenerSecurityProtocolMap: "PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT"
+  advertisedListeners: "PLAINTEXT://:29092,PLAINTEXT_INTERNAL://kafka-service:9092"
+  offsetsTopicReplicationFactor: "1"
+  transactionStateLogMinIsr: "1"
+  transactionStateLogReplicationFactor: "1"
+  confluentLicenseTopicReplicationFactor: "1"
+  confluentBalancerTopicReplicationFactor: "1"
