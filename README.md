@@ -168,7 +168,18 @@ One limit is the hardware, which is restricted to 5 VMs and 8 cores on OpenStack
 
 
 ## Results
-e.g. single machine vs multi-machine cluster
+In this section, we present the results of the ML algorithm, which identifies the data drifts.
+
+id                                   | timestamp                       | drift | feature_0 | feature_1 | feature_2 | label | prediction | test_auc | train_auc                 --------------------------------------+---------------------------------+-------+-----------+-----------+-----------+-------+------------+----------+-----------                 c235383f-d241-4d5d-8849-565482c7973f | 2024-04-12 10:39:18.045000+0000 | False |     4.007 |     6.126 |     6.417 |     1 |          0 | 0.918878 |  0.885744
+
+
+As we can see in the above table, the AUC of the test data (0.918878) is slightly higher than of the training data (0.885744). This indicates that our model has generalized well to the unseen test data, as it performs slightly better on the test set compared to the training set. Despite this not being the main focus of the work, it is a positive sign that our model is not overfitting to the training data and can make accurate predictions on the unseen data stream.
+
+In the below image, the detected drifts are illustrated.
+<img src="results_predicted_drifts.jpg" height="200">
+The x axis corresponds to the timestamps, while the y axis corresponds to whether a drift was detected (value = 1) or not (value = 0).
+
+
 
 ## References
 W. Street, Y. Kim, **A streaming ensemble algorithm (SEA) for large- scale classification**, in: KDD'01, 7th International Conference on Knowledge Discovery and Data Mining, San Francisco, CA, August 2001, pp. 377-382.
