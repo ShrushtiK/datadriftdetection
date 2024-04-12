@@ -34,7 +34,7 @@ def getData(driftType, streamData, batchSize=10):
 
     # transform to numpy array
     data = np.array(data)
-    length=data.shape[0]
+    #length=data.shape[0]
 
     # define how many data points will be returned
     if streamData:
@@ -53,12 +53,9 @@ def getData(driftType, streamData, batchSize=10):
         # utc_timestamp = utc_time.timestamp() 
         ts = datetime.now().isoformat()
 
-        train_or_test = True if index <= 1250 else False
-
         results = { 'id': unique_id,
                     #'timestamp': utc_timestamp,
                     'timestamp': ts,
-                    'train': train_or_test,
                     'feature_0': round(float(data[i][0]), 3),
                     'feature_1': round(float(data[i][1]), 3),
                     'feature_2': round(float(data[i][2]), 3),
@@ -76,9 +73,6 @@ def getData(driftType, streamData, batchSize=10):
         print(f"Sent data: {results}")
         producer.flush()
         time.sleep(1)
-
-
-
 
 
 producer = KafkaProducer(

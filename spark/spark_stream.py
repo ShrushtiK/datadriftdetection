@@ -11,26 +11,26 @@ from pyspark.sql.types import *
 from pyspark.sql.window import Window
 
 
-def create_keyspace(session):
-    session.execute("""
-        CREATE KEYSPACE IF NOT EXISTS spark_streams
-        WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};
-    """)
+# def create_keyspace(session):
+#     session.execute("""
+#         CREATE KEYSPACE IF NOT EXISTS spark_streams
+#         WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'};
+#     """)
 
-    print("Keyspace created successfully!")
+#     print("Keyspace created successfully!")
 
 
 def create_table(session):
     session.execute("""
-        CREATE TABLE IF NOT EXISTS spark_streams.dataframe (
-            id UUID PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS spark_streams.dataframe_test (
+            id UUID,
             timestamp TIMESTAMP,
-            train BOOLEAN,                           
             feature_0 FLOAT,
             feature_1 FLOAT,
             feature_2 FLOAT,
-            label FLOAT
-        );
+            label FLOAT,
+            PRIMARY KEY ((id), timestamp)
+        ) WITH CLUSTERING ORDER BY (timestamp DESC);
         """)
 
 
@@ -68,6 +68,7 @@ def create_spark_connection():
             .config('spark.jars.packages', "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
             .config('spark.dynamicAllocation.enabled', 'true') \
+            .config("spark.num.executors", '2') \
             .config('spark.dynamicAllocation.minExecutors', '1') \
             .config('spark.dynamicAllocation.maxExecutors', '2') \
             .config('spark.cassandra.connection.host', 'cassandra') \
@@ -116,7 +117,6 @@ def create_selection_df_from_kafka(spark_df):
     schema = StructType([
         StructField("id", StringType(), False),
         StructField("timestamp", TimestampType(), False),
-        StructField("train", BooleanType(), False),
         StructField("feature_0", FloatType(), False),
         StructField("feature_1", FloatType(), False),
         StructField("feature_2", FloatType(), False),
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         session = create_cassandra_connection()
 
         if session is not None:
-            create_keyspace(session)
+            #create_keyspace(session)
             create_table(session)
 
             logging.info("Streaming is being started...")
@@ -148,7 +148,7 @@ if __name__ == "__main__":
             streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
                                .option('checkpointLocation', '/tmp/checkpoint')
                                .option('keyspace', 'spark_streams')
-                               .option('table', 'dataframe')
+                               .option('table', 'dataframe_test')
                                .start())
 
             streaming_query.awaitTermination()

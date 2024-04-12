@@ -5,7 +5,7 @@ RUN apt-get update && \
 
 RUN pip install kafka-python==2.0.2 numpy liac-arff
 
-COPY . /app
+COPY DriftSets/ /app/DriftSets
 
 WORKDIR /app
 

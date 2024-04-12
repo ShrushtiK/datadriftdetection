@@ -19,3 +19,7 @@ For now, the testing has been done via the following
 docker compose up --build --scale spark-worker=4
 ```
 
+## Deadline 4
+- Integration of Grafana and connectivity with Cassandra
+- Integration of Airflow for Spark jobs (training and testing)
+- Cassandra table redesign for storing historical data and saving predictions + Cassandra partitioning (full replication)
