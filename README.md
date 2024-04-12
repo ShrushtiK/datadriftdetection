@@ -99,8 +99,6 @@ The drift_analysis table contains a `prediction` column in addition, as well as 
 
 Grafana is connected to Cassandra with which it can communicate by cassandra query language in order to query data and display it in custom-made dashboards. Grafana functions as our UI for displaying the data collected from our Ml jobs.
 
-HERE ADD TECHNOLOGIES AND THEIR VERISONS:
-
 
 ### Infrastructure
 
@@ -123,10 +121,6 @@ Regarding the data streaming pipeline, we transfer data from Kafka to Spark and 
 
 Grafana Dashboards for UI:<br>
 For illustration purposes in Grafana (table ```spark_streams.drift_analysis```), we also use a third table where we store the AUC values and a boolean which corresponds to whether a drift was identified or not.
-
-Spark UI for Spark Application overview:<br>
-hardware resources consumed, data partitioning and shuffling, application status, worker scalability
-
 
 ### Core Algorithm & Data location awareness
 
@@ -170,13 +164,15 @@ One limit is the hardware, which is restricted to 5 VMs and 8 cores on OpenStack
 ## Results
 In this section, we present the results of the ML algorithm, which identifies the data drifts.
 
-id                                   | timestamp                       | drift | feature_0 | feature_1 | feature_2 | label | prediction | test_auc | train_auc                 --------------------------------------+---------------------------------+-------+-----------+-----------+-----------+-------+------------+----------+-----------                 c235383f-d241-4d5d-8849-565482c7973f | 2024-04-12 10:39:18.045000+0000 | False |     4.007 |     6.126 |     6.417 |     1 |          0 | 0.918878 |  0.885744
+id                                   | timestamp                       | drift | feature_0 | feature_1 | feature_2 | label | prediction | test_auc | train_auc<br>
+--------------------------------------+---------------------------------+-------+-----------+-----------+-----------+-------+------------+----------+-----------    <br>
+c235383f-d241-4d5d-8849-565482c7973f | 2024-04-12 10:39:18.045000+0000 | False |     4.007 |     6.126 |     6.417 |     1 |          0 | 0.918878 |  0.885744
 
 
 As we can see in the above table, the AUC of the test data (0.918878) is slightly higher than of the training data (0.885744). This indicates that our model has generalized well to the unseen test data, as it performs slightly better on the test set compared to the training set. Despite this not being the main focus of the work, it is a positive sign that our model is not overfitting to the training data and can make accurate predictions on the unseen data stream.
 
 In the below image, the detected drifts are illustrated.
-<img src="results_predicted_drifts.jpg" height="200">
+<img src="images/results_predicted_drifts.jpg" height="200">
 The x axis corresponds to the timestamps, while the y axis corresponds to whether a drift was detected (value = 1) or not (value = 0).
 
 
@@ -185,10 +181,6 @@ The x axis corresponds to the timestamps, while the y axis corresponds to whethe
 W. Street, Y. Kim, **A streaming ensemble algorithm (SEA) for large- scale classification**, in: KDD'01, 7th International Conference on Knowledge Discovery and Data Mining, San Francisco, CA, August 2001, pp. 377-382.
 
 ## Contributions
-
-
-### Elena
-
 ### Sarah
 #### Deadline 1:
 - Researched the technologies and their fit for the project requirements
@@ -221,6 +213,26 @@ W. Street, Y. Kim, **A streaming ensemble algorithm (SEA) for large- scale class
 - Automized the deployment of all Kube resources with Helmfile
 - OpenStack Heat Orchestration for Autoscaling worker VMs, with Terraform (Archived)
 
+### Elena
+#### Deadline 1:
+- Designed the architecture of the pipeline and the infrastructure
+- Created the initial diagrams for the pipeline and infrastructure
+
+#### Deadline 2:
+- Researched the technologies and their fit for the project requirements (Kafka, Spark)
+
+#### Deadline 3:
+- Implemented producer to read from data set
+
+#### Deadline 4:
+- Researched the technologies and their fit for the project requirements (Helm vs Operators)
+
+#### Deadline 5-6:
+- Deployed Airflow DAGs on Kubernetes (archived)
+- Connection between Cassandra and Grafana
+- Dashboard automation on Grafana (archived)
+- Implemented K8s job that triggers the streaming job automatically (archived)
+- Finalised report
 
 ### Shrushti
 #### Deadline 1:
