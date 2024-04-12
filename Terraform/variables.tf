@@ -46,7 +46,7 @@ variable "flavor_name" {
     type = string
     description = "Flavor to use for the instance"
     #default = "general.v1.tiny"
-    default = "digi.v1.vm.4-8-20"
+    default = "digi.v1.vm.2-8-20"
 }
 
 variable "public_network" {
