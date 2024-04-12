@@ -7,7 +7,7 @@ This project is in collaboration with the ECiDA platform (Evolutionary Changes i
 
 ## Implementation
 ### Architecture
-A diagram of the project's architecture can be found within the repository in the form of a PDF. It can be accessed [here]("Scalable Computing Project Architecture.pdf").
+A diagram of the project's architecture can be found within the repository in the form of a PDF. It can be accessed [here]("architecture/Scalable Computing Project Architecture.pdf").
 
 We chose to use a real-world dataset, as described in (Street and Kim, 2001). The dataset can be found [here](https://www.win.tue.nl/~mpechen/data/DriftSets/).
 
@@ -108,12 +108,17 @@ HERE ADD TECHNOLOGIES AND THEIR VERISONS:
 The services described above are deployed in a Kubernetes cluster with the Cluster Orchestrator K3S, which is automatically setup and deployed in our Terraform configuration. Terraform is a declarative way for automatically setting up the infrastructure on our Cloud provider, OpenStack. In addition, we also use an S3 bucket on Amazon Web Services with which Mlflow communicates for storage purposes. On OpenStack reside, after being defined in Terraform, virtual machines on which the Kubernetes cluster is deployed. Inside the Kubernetes cluster one VM is configured as the Spark Master in the Spark Cluster and the other ones are configured as Spark Workers, which will register with the Spark Master and bind to it inside the Spark cluster. The other services: Mlflow, Kafka, Cassandra, Grafana are also deployed in the Kubernetes cluster and distributed across the VMs. For configuring all these services, we mostly use custom Docker images on which we pre-configure the dependencies and the environments. The Docker images are also used in our Docker-compose deployment which deploys all the containers and manages their environments, connections, networking, and replication. The Docker images are kept on the Cloud, in DockerHub.
 
 ### UI, Historical & Streaming Data
+General:
+Our data corresponds to classification problems. There are three attributes (floating point) and one boolean target value. The initial datasets, included 7500 data points in total. We used 1000 of those data points to train our Machine Learning model (historical), with the remaining data serving as streaming data.
 
 Historical data from Cassandra:
+These 1000 historical data points are stored into the Cassandra database (table ```spark_streams.dataframe_train```), along with a unique ID (UUID) and timestamp.
 
 Stream data from Kafka to Spark, and from Spark to Cassandra:
+Regarding the data streaming pipeline, we transfer data from Kafka to Spark and then from Spark to Cassandra. The process begins by establishing a Spark connection and configuring it to read data from a Kafka topic. The Kafka data is then ingested into Spark as a streaming DataFrame and then written into the Cassandra table (```spark_streams.dataframe_test```).
 
 Grafana Dashboards for UI:
+For illustration purposes in Grafana (table ```spark_streams.drift_analysis```), we also use a third table where we store the RMSE value and a boolean which corresponds to whether a drift was identified or not.
 
 Spark UI for Spark Application overview: hardware resources consumed, data partitioning and shuffling, application status, worker scalability
 
