@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: cassandra-script-executor
-        image: shrushti5/custom-cassandra:1.1
+        image: shrushti5/custom-cassandra:1.3
         command: ["/bin/bash", "-c"]
         args:
         - |

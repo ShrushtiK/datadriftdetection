@@ -103,5 +103,5 @@ releases:
             enabled: true
         image:
           repository: shrushti5/custom-spark
-          tag: 2.1
+          tag: 2.15
 

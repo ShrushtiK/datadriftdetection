@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS spark_streams.drift_analysis (
     feature_1 FLOAT,
     feature_2 FLOAT,
     timestamp TIMESTAMP,
-    train_rmse FLOAT,
-    test_rmse FLOAT,
+    train_auc FLOAT,
+    test_auc FLOAT,
     drift BOOLEAN,
     PRIMARY KEY ((id), timestamp)
 ); 

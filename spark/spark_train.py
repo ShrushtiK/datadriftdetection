@@ -1,15 +1,15 @@
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import VectorAssembler
-from pyspark.ml.regression import GBTRegressor
-from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.sql.functions import row_number, col, monotonically_increasing_id
-from cassandra.cluster import Cluster
+#from pyspark.ml.regression import GBTRegressor
+from pyspark.ml.classification import GBTClassifier
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
+from pyspark.sql.functions import row_number, col
+
 import mlflow
 import mlflow.spark
 #from mlflow import spark as mlflow_spark
-import math
-#import joblib
+
 from pyspark.sql.window import Window
 
 import os
@@ -39,7 +39,7 @@ mlflow.set_experiment("Data drift")
 def getSparkSession():
     spark = SparkSession.builder \
         .appName("Training Model") \
-        .config("spark.kubernetes.container.image", "sarahema/spark_scalable:4.2.0") \
+        .config("spark.kubernetes.container.image", "shrushti5/custom-spark:2.15") \
         .config("spark.kubernetes.namespace", "default") \
         .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                     "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
@@ -49,7 +49,7 @@ def getSparkSession():
         .config("spark.cassandra.auth.password", "cassandra") \
         .config("spark.dynamicAllocation.enabled", "true") \
         .getOrCreate()
-    spark.sparkContext.setLogLevel("ERROR")
+    #spark.sparkContext.setLogLevel("ERROR")
 
     hadoopConf = spark.sparkContext._jsc.hadoopConfiguration()
     hadoopConf.set('fs.s3a.access.key', os.environ["AWS_ACCESS_KEY_ID"])
@@ -91,7 +91,7 @@ featureAssembler = VectorAssembler(
     outputCol="features")
 
 # Configure GBTRegressor
-gbt = GBTRegressor(featuresCol="features", labelCol="label", maxIter=10)
+gbt = GBTClassifier(featuresCol="features", labelCol="label", maxIter=10)
 
 # Chain VectorAssembler and GBT model in a Pipeline
 pipeline = Pipeline(stages=[featureAssembler, gbt])
@@ -102,12 +102,12 @@ with mlflow.start_run() as run:
     model = pipeline.fit(trainingData)
 
     # Initialize evaluator
-    evaluator = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
+    evaluator = BinaryClassificationEvaluator(labelCol="label", rawPredictionCol="rawPrediction", metricName="areaUnderROC")
 
-    # Evaluate training data RMSE
-    trained_rmse = evaluator.evaluate(model.transform(trainingData))
-    print(f"Root Mean Squared Error (RMSE) on training data = {trained_rmse}")
-    mlflow.log_metric("rmse", trained_rmse)
+    # Evaluate 
+    auc = evaluator.evaluate(model.transform(testData))
+    print(f"Area Under ROC = {auc}")
+    mlflow.log_metric("auc", auc)
     mlflow.spark.log_model(spark_model=model, artifact_path="model")
 
 #Save trained model

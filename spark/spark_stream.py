@@ -21,7 +21,6 @@ def create_table(session):
             """)
     session.execute("""
         CREATE TABLE IF NOT EXISTS spark_streams.drift_analysis (
-            test_timestamp TIMESTAMP,
             id UUID,
             label FLOAT,
             prediction FLOAT,
@@ -29,8 +28,10 @@ def create_table(session):
             feature_1 FLOAT,
             feature_2 FLOAT,
             timestamp TIMESTAMP,
-            PRIMARY KEY ((id), test_timestamp)
-        ); 
+            train_auc FLOAT,
+            test_auc FLOAT,
+            drift BOOLEAN,
+            PRIMARY KEY ((id), timestamp));  
         """)
 
     session.execute("""
@@ -62,7 +63,7 @@ def create_spark_connection():
     try:
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config("spark.kubernetes.container.image", "sarahema/spark-scalable:3.6.0") \
+            .config("spark.kubernetes.container.image", "shrushti5/custom-spark:2.15") \
             .config("spark.kubernetes.namespace", "default") \
             .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \

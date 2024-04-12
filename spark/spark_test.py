@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.ml import PipelineModel
-from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.sql.functions import lit
 
 import mlflow
@@ -19,7 +19,7 @@ os.getenv("AWS_SECRET_ACCESS_KEY")
 def getSparkSession():
     spark = SparkSession.builder \
         .appName("Testing Model") \
-        .config("spark.kubernetes.container.image", "shrushti5/custom-spark:2.10") \
+        .config("spark.kubernetes.container.image", "shrushti5/custom-spark:2.15") \
         .config("spark.kubernetes.namespace", "default") \
         .config("spark.jars.packages", "com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,"
                                     "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1") \
@@ -45,8 +45,8 @@ spark = getSparkSession()
 runs = mlflow.search_runs(search_all_experiments=True)
 latest_run = runs.iloc[0]
 
-trained_rmse = latest_run["metrics.rmse"]
-print(f"Root Mean Squared Error (RMSE) on train data = {trained_rmse}")
+auc = latest_run["metrics.auc"]
+print(f"Area Under ROC on train data = {auc}")
 #model_url = f"runs://{latest_run.run_id}/model"
 model_url = f"{latest_run.artifact_uri}/model"
 
@@ -73,29 +73,31 @@ testData = testData.repartition("label")
 # Predict using the model
 predictions = model.transform(testData)
 
-# Initialize evaluator for RMSE
-evaluator = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
+# Initialize evaluator 
+evaluator = BinaryClassificationEvaluator(labelCol="label", rawPredictionCol="rawPrediction", metricName="areaUnderROC")
 
 # Calculate RMSE for the test data
-test_rmse = evaluator.evaluate(predictions)
+test_auc = evaluator.evaluate(predictions)
 
-print(f"Root Mean Squared Error (RMSE) on test data = {test_rmse}")
+print(f"Area Under ROC on test data = {test_auc}")
 
 drift = False
 
-if test_rmse > trained_rmse * 1.1:
+if abs(test_auc - auc) > 0.05:
     print("Potential Drift Detected")
     drift = True
 else:
     print("No Drift Detected")
 
-
+#predictions.printSchema()
+#print(predictions.columns)
+#print(predictions.select("prediction").show(50, truncate=False))
 predictions_for_drift = predictions \
-    .withColumn('train_rmse', lit(trained_rmse)) \
-    .withColumn('test_rmse', lit(test_rmse)) \
+    .withColumn('train_auc', lit(auc)) \
+    .withColumn('test_auc', lit(test_auc)) \
     .withColumn('drift', lit(drift))
 
-drift_data = predictions_for_drift.select("id", "label", "prediction", "feature_0", "feature_1", "feature_2", "timestamp", "train_rmse", "test_rmse", "drift")
+drift_data = predictions_for_drift.select("id", "label", "prediction", "feature_0", "feature_1", "feature_2", "timestamp", "train_auc", "test_auc", "drift")
 drift_data.write \
     .format("org.apache.spark.sql.cassandra") \
     .mode("append") \
