@@ -206,7 +206,7 @@ W. Street, Y. Kim, **A streaming ensemble algorithm (SEA) for large- scale class
 - Integration of Grafana and connectivity with Cassandra
 - Cassandra table redesign for storing historical data and saving predictions
 - Cassandra partitioning (full replication)
-- Scripted the Spark job for spark_train.py and spark_test.py with the MLSpark, not finished
+- Scripted the Spark job for spark_train.py and spark_test.py to run from Airflow DAG (Archived)
 
 #### Deadline 5-6:
 - Deployed Airflow on Kube (Archived)
