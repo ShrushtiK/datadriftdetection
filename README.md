@@ -13,7 +13,7 @@ We chose to use a real-world dataset, as described in (Street and Kim, 2001). Th
 
 The project is a scalable implementation of a drift-detection machine learning algorithm.
 
-![images/infra_pipeline.png](images/infra_pipeline.png)
+![images/infra_pipeline.png](images/infra_pipeline.PNG)
 
 
 #### Apache Kafka
@@ -103,7 +103,7 @@ HERE ADD TECHNOLOGIES AND THEIR VERISONS:
 
 [comment]: <> (Managed to have our components aka Spark, Kafka, Cassandra and Data Generator up via docker compose and successfully able to update Cassandra with our dataset values via a Spark job)
 
-![images/infra_cloud.png](images/infra_cloud.png)
+![images/infra_cloud.png](images/infra_cloud.PNG)
 
 The services described above are deployed in a Kubernetes cluster with the Cluster Orchestrator K3S, which is automatically setup and deployed in our Terraform configuration. Terraform is a declarative way for automatically setting up the infrastructure on our Cloud provider, OpenStack. In addition, we also use an S3 bucket on Amazon Web Services with which Mlflow communicates for storage purposes. On OpenStack reside, after being defined in Terraform, virtual machines on which the Kubernetes cluster is deployed. Inside the Kubernetes cluster one VM is configured as the Spark Master in the Spark Cluster and the other ones are configured as Spark Workers, which will register with the Spark Master and bind to it inside the Spark cluster. The other services: Mlflow, Kafka, Cassandra, Grafana are also deployed in the Kubernetes cluster and distributed across the VMs. For configuring all these services, we mostly use custom Docker images on which we pre-configure the dependencies and the environments. The Docker images are also used in our Docker-compose deployment which deploys all the containers and manages their environments, connections, networking, and replication. The Docker images are kept on the Cloud, in DockerHub.
 
@@ -124,7 +124,7 @@ Spark UI for Spark Application overview: hardware resources consumed, data parti
 Dataset: Synthetic data for data and concept drift. The dataset was chosen because it was previously used in studies on drift detection, and therefore can make our project's results comparable to a baseline. The dataset also covers both data and concept drift.
 Spark RDD vs Dataframe - we use Dataframes: RDDs are immutable and distributed collections of data stored on the spark workers. Dataframes are higher-level abstractions of RDDs which are organized into tables of columns. The MLSpark library also defaults to using Dataframes.
 Fault-tolerance: When a worker node fails, the DAGs (transformations of data) applied on the local RDDs of the worker are saved so that they can be recomputed when the new worker spawns and resumes the DAG tasks of the previous worker.
-![images/lineage.png](images/lineage.png)
+![images/lineage.png](images/lineage.PNG)
 Data Locality Awareness: The key-value RDDs have their keys hashed so that the Spark context is aware of the location of each RDD after the partitioning of the data into RDDs and the distribution of the RDDs to the different workers. Data locality has different levels in Spark, which is configurable, but we kept the default level. The different levels of data locality in Spark are:
 1. NO_PREF: no locality preference; it starts from PROCESS_LOCAL and changes to higher levels by necessity
 2. PROCESS_LOCAL: process RDDs from the same JVM
@@ -136,7 +136,7 @@ In out case, setting the data locality to NO_PREF means that Spark will schedule
 
 Data locality awareness can be observed in the Spark UI, which displays the applications submitted on Spark and the allocated resources for running the application (executors and number of cores, which run in parallel), in addition to displaying the read and write operations and the shuffling of RDDs. Less shuffling in the read-write operations are a sign that the data locality level is set in such a way that the jobs can run on the designated executors without an overhead of moving RDDs between executors.
 
-![images/data_locality.png](images/data_locality.png)
+![images/data_locality.png](images/data_locality.PNG)
 Data Partitioning: The RDDs are built based on a partition schema for the data. Since we are using a Dataframe, the partitioning schema is based on a column of the table. We chose te column 'label', which takes binary values 0 and 1, as the partitioning schema column, because this will enforce a minimum of two RDDs for the data, scalable to subsets of RDD(0) and RDD(1) if the Spark manager redistributes the workload to other executors. The column 'label' was chosen because the other columns have unique values, which would lead to many inefficient RDD partitions. How this will work in our ML setup jobs is:
 - One executor will get the data with the RDDs formed out of  the rows in Cassandra with the 'label' value 0, and the other executor will get the partitioning with the 'label' value 1.
 - The workers calculate the gradients based on their specific RDD partition, and then return the calculated gradient at the end of each parallel epoch to the master.
