@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: spark-streaming-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: spark-streaming
+        image: shrushti5/custom-spark:2.15
+        command: ["/bin/bash", "-c"]
+        args:
+        - >
+          spark-submit --master spark://spark-master-svc:7077
+          --py-files /usr/app/spark_stream.py
+          --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,saurfang:spark-sas7bdat:3.0.0-s_2.12,org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk-bundle:1.11.901,org.apache.hadoop:hadoop-common:3.3.1
+          --conf spark.cassandra.auth.username=cassandra
+          --conf spark.cassandra.auth.password=cassandra
+          --conf spark.driver.extraJavaOptions="-Divy.cache.dir=/tmp -Divy.home=/tmp"          
+          /usr/app/spark_stream.py
+      restartPolicy: Never
+  backoffLimit: 4
