@@ -13,11 +13,11 @@ We chose to use a real-world dataset, as described in (Street and Kim, 2001). Th
 
 The project is a scalable implementation of a drift-detection machine learning algorithm.
 
-![images/infra_pipeline.png](images/infra_pipeline.PNG)
+<img src="images/infra_pipeline.PNG" height="200">
 
 
 #### Apache Kafka
-The data generator consists of a data producer, which is implemented with Apache Kafka and which feeds the live data stream into a Kafka Queue. The queue persists the data in case the consumer end is not able to receive it,a nd it also makes sure that the data points are sent in the order that they were produced. The Kafka broker manages how the data is distributed from the producers to the consumers based on kafka topics, where the producers publish data on a certain topic and the consumers subscribe to a topic from which they receive data. Kafka can also be distributed, where multiple producers publish streams of data to topics, the data streams are stored in multiple distributed queues with data supporting replication and streaming the data to multiple consumers. 
+The data generator consists of a data producer, which is implemented with Apache Kafka and which feeds the live data stream into a Kafka Queue. The queue persists the data in case the consumer end is not able to receive it, and it also makes sure that the data points are sent in the order that they were produced. The Kafka broker manages how the data is distributed from the producers to the consumers based on kafka topics, where the producers publish data on a certain topic and the consumers subscribe to a topic from which they receive data. Kafka can also be distributed, where multiple producers publish streams of data to topics, the data streams are stored in multiple distributed queues with data supporting replication and streaming the data to multiple consumers. 
 
 #### Apache Spark
 
@@ -37,7 +37,7 @@ Spark executes 3 different applications:
 
 MLSpark is a native library in Apache Spark which is used for performing Machine Learning applications by using the native Dataframe (RDD abstractions) for working with the data. 
 
-Our ML model from this library is a GBTRegressor, which is a Boosted Decision Trees Regressor. The model predict the next timestamp values for each feature and then compares it with the true value of each feature, respectively. We designed the drift detection based on a threshold approach, where the difference between the model prediction and the target value is compared to a set threshold value and triggers an alert for the drift.
+Our ML model from this library is a GBTClassifier, which is a Gradient-Boosted Decision Trees algorithm for classification. The model predicts the class labels for each data point and then compares them with the true class labels, respectively. We designed the drift detection based on a threshold approach, where we check if the difference between the Area Under the Curve (AUC) of the test data and the train data is above a threshold value and trigger an alert for potential drift.
 
 #### Cassandra Database
 
@@ -86,11 +86,14 @@ The dataframe_test is a simplified version of the dataframe_train, since we need
             feature_1 FLOAT,
             feature_2 FLOAT,
             timestamp TIMESTAMP,
+            train_auc FLOAT,
+            test_auc FLOAT,
+            drift BOOLEAN,
             PRIMARY KEY ((id), timestamp)
         ); 
 ```
 
-The drift_analysis table contains a `prediction` column in addition.
+The drift_analysis table contains a `prediction` column in addition, as well as the values for the Area Under the Curve (AUC), and a boolean value indicating whether a drift was detected or not.
 
 #### Grafana
 
@@ -103,7 +106,8 @@ HERE ADD TECHNOLOGIES AND THEIR VERISONS:
 
 [comment]: <> (Managed to have our components aka Spark, Kafka, Cassandra and Data Generator up via docker compose and successfully able to update Cassandra with our dataset values via a Spark job)
 
-![images/infra_cloud.png](images/infra_cloud.PNG)
+
+<img src="images/infra_cloud.PNG" height="200">
 
 The services described above are deployed in a Kubernetes cluster with the Cluster Orchestrator K3S, which is automatically setup and deployed in our Terraform configuration. Terraform is a declarative way for automatically setting up the infrastructure on our Cloud provider, OpenStack. In addition, we also use an S3 bucket on Amazon Web Services with which Mlflow communicates for storage purposes. On OpenStack reside, after being defined in Terraform, virtual machines on which the Kubernetes cluster is deployed. Inside the Kubernetes cluster one VM is configured as the Spark Master in the Spark Cluster and the other ones are configured as Spark Workers, which will register with the Spark Master and bind to it inside the Spark cluster. The other services: Mlflow, Kafka, Cassandra, Grafana are also deployed in the Kubernetes cluster and distributed across the VMs. For configuring all these services, we mostly use custom Docker images on which we pre-configure the dependencies and the environments. The Docker images are also used in our Docker-compose deployment which deploys all the containers and manages their environments, connections, networking, and replication. The Docker images are kept on the Cloud, in DockerHub.
 
@@ -118,7 +122,7 @@ Stream data from Kafka to Spark, and from Spark to Cassandra:<br>
 Regarding the data streaming pipeline, we transfer data from Kafka to Spark and then from Spark to Cassandra. The process begins by establishing a Spark connection and configuring it to read data from a Kafka topic. The Kafka data is then ingested into Spark as a streaming DataFrame and then written into the Cassandra table (```spark_streams.dataframe_test```).
 
 Grafana Dashboards for UI:<br>
-For illustration purposes in Grafana (table ```spark_streams.drift_analysis```), we also use a third table where we store the RMSE value and a boolean which corresponds to whether a drift was identified or not.
+For illustration purposes in Grafana (table ```spark_streams.drift_analysis```), we also use a third table where we store the AUC values and a boolean which corresponds to whether a drift was identified or not.
 
 Spark UI for Spark Application overview:<br>
 hardware resources consumed, data partitioning and shuffling, application status, worker scalability
