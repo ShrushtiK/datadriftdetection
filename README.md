@@ -3,8 +3,7 @@
 
 ## Core Contributors
 
-[![Sarah Allam](https://github.com/alice.png?size=50)](https://github.com/SarahEmaAllam) Sarah Allam  
-[![Shrushti Kaul](https://github.com/bob.png?size=50)](https://github.com/ShrushtiK) Shrushti Kaul
+[![Sarah Allam]](https://github.com/SarahEmaAllam) Sarah Allam and [![Shrushti Kaul]](https://github.com/ShrushtiK) Shrushti Kaul
 
 ## Introduction 
 In the dynamic field of machine learning, even the most exceptional models encounter hidden risks known as data and concept drift. Data drift refers to a change in the statistical properties of data, rendering predictions outdated. Concept drift indicates a fundamental shift over time in the relationship between the input and the target.
