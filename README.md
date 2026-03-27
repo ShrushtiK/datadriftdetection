@@ -1,4 +1,6 @@
-# ECiDA: Data and Concept Drift Detection
+# RuG Scalable Computing 2023-2024
+# ECiDA: Data Drift Detection
+## By Sarah Allam and Shrushti Kaul
 
 ## Introduction 
 In the dynamic field of machine learning, even the most exceptional models encounter hidden risks known as data and concept drift. Data drift refers to a change in the statistical properties of data, rendering predictions outdated. Concept drift indicates a fundamental shift over time in the relationship between the input and the target.
@@ -178,83 +180,4 @@ The x axis corresponds to the timestamps, while the y axis corresponds to whethe
 
 
 ## References
-W. Street, Y. Kim, **A streaming ensemble algorithm (SEA) for large- scale classification**, in: KDD'01, 7th International Conference on Knowledge Discovery and Data Mining, San Francisco, CA, August 2001, pp. 377-382.
-
-## Contributions
-### Sarah
-#### Deadline 1:
-- Researched the technologies and their fit for the project requirements
-- Designed the architecture of the pipeline and the infrastructure
-- Created the initial diagrams for the pipeline and infrastructure
-
-#### Deadline 2:
-- Docker-compose for deploying Kafka, Cassandra, and Spark
-
-#### Deadline 3
-- Scripted the Spark job for spark_stream.py
-- Fixed Kafka producer
-
-#### Deadline 4
-- Integration of Grafana and connectivity with Cassandra
-- Cassandra table redesign for storing historical data and saving predictions
-- Cassandra partitioning (full replication)
-- Scripted the Spark job for spark_train.py and spark_test.py with the MLSpark, not finished
-
-#### Deadline 5-6:
-- Deployed Airflow on Kube (Archived)
-- Deployed Spark on Kube
-- Deployed Kafka  on Kube
-- Deployed CassandraDB  on Kube
-- Deployed Kafka Producer  on Kube
-- Configure and submit the data stream job on Spark  on Kube with spark-submit command
-- Connected Spark with Kafka, creation of data stream and dataframe on Kube
-- Connecting Spark with CassandraDB, authentication
-- Deployed Grafana and automatised connection with Cassandra
-- Automized the deployment of all Kube resources with Helmfile
-- OpenStack Heat Orchestration for Autoscaling worker VMs, with Terraform (Archived)
-
-### Elena
-#### Deadline 1:
-- Designed the architecture of the pipeline and the infrastructure
-- Created the initial diagrams for the pipeline and infrastructure
-
-#### Deadline 2:
-- Researched the technologies and their fit for the project requirements (Kafka, Spark)
-
-#### Deadline 3:
-- Implemented producer to read from data set
-
-#### Deadline 4:
-- Researched the technologies and their fit for the project requirements (Helm vs Operators)
-
-#### Deadline 5-6:
-- Deployed Airflow DAGs on Kubernetes (archived)
-- Connection between Cassandra and Grafana
-- Dashboard automation on Grafana (archived)
-- Implemented K8s job that triggers the streaming job automatically (archived)
-- Finalised report
-
-### Shrushti
-#### Deadline 1:
-- Designed the architecture of the pipeline and the infrastructure
-- Created the initial diagrams for the pipeline and infrastructure
-
-#### Deadline 2:
-- Researched the technologies and their fit for the project requirements
-
-#### Deadline 3
-- Ensure connectivity between components for streaming and inserting into database
-- Coding spark jobs for training and testing
-
-#### Deadline 4
-- Scripted the Spark job for spark_train.py and spark_test.py to run from Airflow DAG (Archived)
-- Cassandra table redesign for storing historical data and saving predictions
-- Terraform code to deploy architecture on Openstack 
-
-#### Deadline 5-6:
-- Terraform and k8s deployed on VM via K3s and start with the helmfile
-- Airflow DAG on Kube (Archived)
-- Deployed CassandraDB  on Kube, Connecting Spark with CassandraDB,
-- Inclusion of MLFlow, S3 and MySQL for ML model management
-- Integration of MLflow with the Spark jobs
-- Finalizing the GBTClassifier for the train and test jobs, and deduce drift via AUC, updates to Cassandra for the same
+W. Street, Y. Kim, **A streaming ensemble algorithm (SEA) for large- scale classification**, in: KDD'01, 7th International Conference on Knowledge Discovery and Data Mining, San Francisco, CA, August 2001, pp. 377-382
